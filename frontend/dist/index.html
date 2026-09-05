@@ -3,25 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TriageAI - Clinical Core v2.4 | Healthcare Patient Intake Triage</title>
+  <title>TriageAI - Clinical Core v2.4</title>
   
-  <!-- Tailwind CSS CDN -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            sidebarBg: '#1e2837',
-            sidebarActive: '#15202e',
-            canvasBg: '#f8fafc',
-            brandDark: '#0f172a',
-            brandNavy: '#131e2d',
-            alertRed: '#dc2626',
-            alertBg: '#fee2e2',
-            badgeGreen: '#10b981',
-            badgeAmber: '#f59e0b',
-            accentBlue: '#0284c7'
+            appNavy: '#0c2340',
+            appDark: '#081729',
+            activeNav: '#0f2444',
+            lightBg: '#f8fafc',
+            borderLight: '#e2e8f0',
+            textPrimary: '#0f172a',
+            textSecondary: '#64748b',
+            alertRedBg: '#fee2e2',
+            alertRedText: '#b91c1c'
           },
           fontFamily: {
             sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
@@ -37,7 +36,7 @@
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- Inter Font -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -46,30 +45,25 @@
     body {
       font-family: 'Inter', sans-serif;
       background-color: #f8fafc;
-      color: #1e293b;
+      color: #0f172a;
       margin: 0;
       padding: 0;
+      -webkit-font-smoothing: antialiased;
     }
-    .mono {
-      font-family: 'JetBrains Mono', monospace;
-    }
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white; }
-    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
   </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased">
+<body class="bg-[#f8fafc]">
   <div id="root"></div>
 
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
     function App() {
-      // Current active view: 'dashboard', 'workflow', 'rules', 'history', 'escalations', 'note'
+      // Main navigation view: 'dashboard', 'workflow', 'rules', 'history', 'escalations', 'note'
       const [currentView, setCurrentView] = useState("dashboard");
       
       // 4-Step Clinical Triage Workflow: 1 (Understand), 2 (Clarify), 3 (Synthesis), 4 (Evaluate)
@@ -112,10 +106,8 @@
       // Modals
       const [showQuickTriage, setShowQuickTriage] = useState(false);
       const [showEscalatedModal, setShowEscalatedModal] = useState(false);
-      const [showSimModal, setShowSimModal] = useState(false);
-      const [simData, setSimData] = useState(null);
 
-      // Initial fetch
+      // Load initial backend data
       useEffect(() => {
         fetch("/api/stats").then(r => r.ok ? r.json() : null).then(d => d && setStats(d)).catch(() => {});
         fetch("/api/active-sessions").then(r => r.ok ? r.json() : null).then(d => d && setActiveSessions(d)).catch(() => {});
@@ -127,7 +119,7 @@
         }).catch(() => {});
       }, []);
 
-      // Start Assessment (Transition Step 1 -> Step 2)
+      // Start Assessment (Step 1 -> Step 2)
       const handleStartAssessment = async () => {
         if (!patientNarrative.trim()) return;
         try {
@@ -159,7 +151,7 @@
         if (currentQuestionIdx + 1 < (questions.length || 2)) {
           setCurrentQuestionIdx(prev => prev + 1);
         } else {
-          setWorkflowStep(3); // Go to Synthesis
+          setWorkflowStep(3); // Go to Synthesis & Review
         }
       };
 
@@ -198,11 +190,6 @@
         }
       };
 
-      // Escalate human action
-      const triggerEscalation = () => {
-        setShowEscalatedModal(true);
-      };
-
       // Filtered sessions
       const filteredSessions = useMemo(() => {
         return activeSessions.filter(s => {
@@ -227,112 +214,120 @@
       return (
         <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
           
-          {/* ===================== SIDEBAR (Exact to Mockups) ===================== */}
-          <aside className="w-60 bg-[#16202f] text-slate-300 flex flex-col justify-between flex-shrink-0 z-20 border-r border-slate-800 select-none">
+          {/* ===================== SIDEBAR (WHITE BACKGROUND - EXACT TO MOCKUPS) ===================== */}
+          <aside className="w-56 bg-white text-slate-700 flex flex-col justify-between flex-shrink-0 z-20 border-r border-[#e2e8f0] select-none">
             <div>
               {/* Brand Header */}
               <div className="p-5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0b1420] border border-slate-700 flex items-center justify-center text-white font-bold text-sm tracking-wide">
+                <div className="w-8 h-8 rounded-lg bg-[#0b1b30] flex items-center justify-center text-white font-bold text-sm tracking-wide shadow-sm">
                   Ai
                 </div>
                 <div>
-                  <h1 className="text-white font-semibold text-sm leading-tight">TriageAI</h1>
-                  <p className="text-[11px] text-slate-400">Clinical Core v2.4</p>
+                  <h1 className="text-slate-900 font-bold text-sm leading-tight">TriageAI</h1>
+                  <p className="text-[11px] text-slate-400 font-normal">Clinical Core v2.4</p>
                 </div>
               </div>
 
-              {/* Navigation Menu */}
-              <nav className="px-3 space-y-1 mt-2">
+              {/* Navigation Menu (White with Dark Navy Active Pill) */}
+              <nav className="px-3 space-y-1 mt-1">
+                {/* Dashboard Button */}
                 <button
                   onClick={() => setCurrentView("dashboard")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "dashboard"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                   <span>Dashboard</span>
                 </button>
 
+                {/* New Assessment Button */}
                 <button
                   onClick={() => {
                     setWorkflowStep(1);
                     setCurrentView("workflow");
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "workflow"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                   <span>New Assessment</span>
                 </button>
 
+                {/* Active Assessments */}
                 <button
                   onClick={() => setCurrentView("active-assessments")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "active-assessments"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                   <span>Active Assessments</span>
                 </button>
 
+                {/* Triage History */}
                 <button
                   onClick={() => setCurrentView("history")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "history"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <span>Triage History</span>
                 </button>
 
+                {/* Rules */}
                 <button
                   onClick={() => setCurrentView("rules")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "rules"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   <span>Rules</span>
                 </button>
 
+                {/* Escalations */}
                 <button
                   onClick={() => setCurrentView("escalations")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "escalations"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   <span>Escalations</span>
                 </button>
 
+                {/* Analytics */}
                 <button
                   onClick={() => setCurrentView("analytics")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     currentView === "analytics"
-                      ? "bg-[#253549] text-white font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                      ? "bg-[#0f2444] text-white shadow-sm"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>
                   <span>Analytics</span>
                 </button>
 
+                {/* Settings */}
                 <button
-                  onClick={() => alert("System settings configured according to AIIEM Clinical Protocol Board v4.2.")}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/40"
+                  onClick={() => alert("Settings locked under Governance Revision 4.2.")}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span>Settings</span>
@@ -340,29 +335,29 @@
               </nav>
             </div>
 
-            {/* Sidebar Bottom Profile (Exact to Image 1) */}
-            <div className="p-3 space-y-2 border-t border-slate-800">
-              <div className="flex items-center gap-2 text-xs text-slate-400 px-2 py-1 cursor-pointer hover:text-slate-200">
+            {/* Sidebar Bottom Profile (Exact Light Card) */}
+            <div className="p-3 space-y-2 border-t border-[#e2e8f0]">
+              <div className="flex items-center gap-2 text-xs text-slate-500 px-2 py-1 cursor-pointer hover:text-slate-800">
                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" /></svg>
                 <span>Help & Safety</span>
               </div>
-              <div className="flex items-center gap-3 p-2 rounded-xl bg-[#e2e8f0] text-slate-900 shadow-sm">
-                <div className="w-8 h-8 rounded-full bg-[#1e293b] flex items-center justify-center text-white text-xs">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#f1f5f9] text-slate-900">
+                <div className="w-8 h-8 rounded-full bg-[#0f2444] flex items-center justify-center text-white text-xs font-semibold">
+                  SC
                 </div>
                 <div className="overflow-hidden">
-                  <div className="text-xs font-bold leading-tight">Dr. Sarah Chen</div>
+                  <div className="text-xs font-bold text-slate-900 leading-tight">Dr. Sarah Chen</div>
                   <div className="text-[10px] text-slate-500 leading-tight">Attending Physician</div>
                 </div>
               </div>
             </div>
           </aside>
 
-          {/* ===================== MAIN CANVAS ===================== */}
+          {/* ===================== MAIN CONTENT CANVAS ===================== */}
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
             
             {/* Top Bar (Exact to Mockups) */}
-            <header className="sticky top-0 z-10 bg-white border-b border-slate-200/80 px-8 py-3 flex items-center justify-between">
+            <header className="sticky top-0 z-10 bg-white border-b border-[#e2e8f0] px-8 py-3 flex items-center justify-between">
               <div className="w-96">
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -373,7 +368,7 @@
                     placeholder="Search patient ID, acuity, or symptoms..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white text-slate-700 placeholder:text-slate-400"
+                    className="w-full pl-9 pr-4 py-1.5 text-xs bg-[#f8fafc] border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white text-slate-700 placeholder:text-slate-400"
                   />
                 </div>
               </div>
@@ -381,24 +376,25 @@
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowQuickTriage(true)}
-                  className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5"
+                  className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5"
                 >
                   <span>+ Quick Triage</span>
                 </button>
-                <div className="relative p-1.5 text-slate-500 hover:text-slate-800 cursor-pointer">
+                <div className="relative p-1 text-slate-400 hover:text-slate-700 cursor-pointer">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full"></span>
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
                 </div>
               </div>
             </header>
 
-            {/* ===================== DASHBOARD (IMAGE 1 EXACT) ===================== */}
+            {/* ===================== DASHBOARD VIEW (IMAGE 5 IN USER UPLOAD) ===================== */}
             {currentView === "dashboard" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
-                {/* Welcome Header */}
+                
+                {/* Greeting & Action Header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900">Good morning, Sarah</h2>
+                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Good morning, Sarah</h2>
                     <p className="text-xs text-slate-500 mt-0.5">Let's make every patient intake safer and clearer.</p>
                   </div>
                   <button
@@ -406,28 +402,28 @@
                       setWorkflowStep(1);
                       setCurrentView("workflow");
                     }}
-                    className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm"
+                    className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm"
                   >
                     + New Patient Assessment
                   </button>
                 </div>
 
-                {/* 4 Stat Cards */}
+                {/* 4 Metric Cards (Image 5) */}
                 <div className="grid grid-cols-4 gap-4">
                   {/* Card 1 */}
-                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex justify-between items-start">
+                  <div className="bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm flex justify-between items-start">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-500">Active Assessments</div>
                       <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.active_assessments}</div>
                       <div className="text-[11px] font-medium text-sky-600 mt-1">↑+2% from hr</div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-lg bg-[#0f2444] text-white flex items-center justify-center">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /></svg>
                     </div>
                   </div>
 
                   {/* Card 2 */}
-                  <div className="bg-[#fef2f2] p-4 rounded-xl border border-rose-100 shadow-sm flex justify-between items-start">
+                  <div className="bg-[#fef2f2] p-4 rounded-2xl border border-rose-100 shadow-sm flex justify-between items-start">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-600">Awaiting Human Review</div>
                       <div className="text-xl font-bold text-rose-600 mt-2 font-mono">{stats.awaiting_human_review}</div>
@@ -439,7 +435,7 @@
                   </div>
 
                   {/* Card 3 */}
-                  <div className="bg-[#f0f9ff] p-4 rounded-xl border border-sky-100 shadow-sm flex justify-between items-start">
+                  <div className="bg-[#f0f9ff] p-4 rounded-2xl border border-sky-100 shadow-sm flex justify-between items-start">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-600">Escalated Today</div>
                       <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.escalated_today}</div>
@@ -451,7 +447,7 @@
                   </div>
 
                   {/* Card 4 */}
-                  <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm flex justify-between items-start">
+                  <div className="bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm flex justify-between items-start">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-500">Average Intake Time</div>
                       <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.average_intake_time}</div>
@@ -463,8 +459,8 @@
                   </div>
                 </div>
 
-                {/* Active Assessments Table (Exact to Image 1) */}
-                <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm overflow-hidden">
+                {/* Active Assessments Table (Image 5) */}
+                <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
                   <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">Active Assessments</h3>
@@ -532,8 +528,8 @@
                                 }}
                                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                                   row.action_type === "Review" || row.action_type === "Assess"
-                                    ? "bg-[#0f172a] text-white hover:bg-slate-800"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                                    ? "bg-[#0f2444] text-white hover:bg-slate-800"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                 }`}
                               >
                                 {row.action_type || "Details"}
@@ -549,12 +545,13 @@
                     <div>Showing 4 of 14 active patient sessions</div>
                     <div className="flex gap-1">
                       <button className="px-2 py-0.5 border border-slate-200 rounded">Previous</button>
-                      <button className="px-2 py-0.5 bg-[#0f172a] text-white font-semibold rounded">1</button>
+                      <button className="px-2 py-0.5 bg-[#0f2444] text-white font-semibold rounded">1</button>
                       <button className="px-2 py-0.5 border border-slate-200 rounded">2</button>
                       <button className="px-2 py-0.5 border border-slate-200 rounded">Next</button>
                     </div>
                   </div>
                 </div>
+
               </main>
             )}
 
@@ -562,35 +559,35 @@
             {currentView === "workflow" && (
               <main className="p-8 max-w-5xl mx-auto w-full space-y-6">
                 
-                {/* Workflow Header & Step Breadcrumb (Exact to Image 2) */}
+                {/* Workflow Header & Step Breadcrumb (Exact to Image 4) */}
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Clinical Triage Workflow</div>
                     <h2 className="text-xl font-bold text-slate-900 mt-0.5">New Patient Assessment</h2>
                   </div>
 
-                  {/* 4-Step Pill on Right (Image 2) */}
-                  <div className="flex items-center gap-3 text-xs bg-slate-100 p-1 rounded-xl">
-                    <span className={`px-3 py-1 rounded-lg font-bold ${workflowStep === 1 ? "bg-[#0f172a] text-white shadow-sm" : "text-slate-500"}`}>
+                  {/* 4-Step Pill on Right (Image 4) */}
+                  <div className="flex items-center gap-2 text-xs bg-slate-100 p-1 rounded-xl">
+                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 1 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       1 Understand
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold ${workflowStep === 2 ? "bg-[#0f172a] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 2 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       2 Clarify
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold ${workflowStep === 3 ? "bg-[#0f172a] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 3 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       3 Evaluate
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold ${workflowStep === 4 ? "bg-[#0f172a] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 4 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       4 Triage Note
                     </span>
                   </div>
                 </div>
 
-                {/* --- STEP 1: UNDERSTAND (IMAGE 2 EXACT) --- */}
+                {/* --- STEP 1: UNDERSTAND (IMAGE 4 EXACT) --- */}
                 {workflowStep === 1 && (
                   <div className="grid grid-cols-3 gap-6">
                     {/* Left Form (2 cols) */}
-                    <div className="col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
+                    <div className="col-span-2 bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-sm space-y-5">
                       <div className="flex items-start gap-3">
                         <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold">
                           💬
@@ -650,7 +647,7 @@
                         <button
                           type="button"
                           onClick={handleStartAssessment}
-                          className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg shadow-sm flex items-center gap-1.5"
+                          className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-sm flex items-center gap-1.5"
                         >
                           <span>Start Assessment</span>
                           <span>→</span>
@@ -658,9 +655,9 @@
                       </div>
                     </div>
 
-                    {/* Right Column: Metadata & Clinical AI Tip (Image 2) */}
+                    {/* Right Column: Metadata & Clinical AI Tip (Image 4) */}
                     <div className="space-y-4">
-                      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+                      <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session Metadata</span>
                           <span className="text-[10px] font-semibold bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full border border-sky-200">New Intake</span>
@@ -683,7 +680,7 @@
                       </div>
 
                       {/* Clinical AI Tip (Dark Navy Card) */}
-                      <div className="bg-[#132238] text-white rounded-2xl p-5 shadow-md space-y-2">
+                      <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-2">
                         <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold">
                           <span>💡</span>
                           <span>Clinical AI Tip</span>
@@ -700,12 +697,12 @@
                 {workflowStep === 2 && (
                   <div className="grid grid-cols-3 gap-6">
                     {/* Left Chat Stream (2 cols) */}
-                    <div className="col-span-2 bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm space-y-5">
+                    <div className="col-span-2 bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-sm space-y-5">
                       <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2 text-[10px] font-bold text-sky-600 uppercase tracking-wider">
                             <span className="w-2 h-2 rounded-full bg-sky-600"></span>
-                            <span>Assessment in Progress</span>
+                            <span>ASSESSMENT IN PROGRESS</span>
                           </div>
                           <h3 className="text-sm font-bold text-slate-900 mt-0.5">Active Triage Session</h3>
                           <p className="text-[11px] text-slate-400">Automated clinical interview protocol engaged. Please review responses or prompt manual override.</p>
@@ -716,7 +713,7 @@
                       </div>
 
                       {/* Patient Chat Bubble */}
-                      <div className="bg-[#132238] text-white rounded-xl p-4 shadow-sm">
+                      <div className="bg-[#0c2340] text-white rounded-xl p-4 shadow-sm">
                         <div className="text-[10px] text-slate-400 mb-1">Patient • 10:42 AM</div>
                         <p className="text-xs text-slate-100 leading-relaxed">
                           {patientNarrative}
@@ -803,7 +800,7 @@
 
                     {/* Right Column: Metadata & NLP Core (Image 3) */}
                     <div className="space-y-4">
-                      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-3">
+                      <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-3">
                         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                           <span className="text-xs font-bold text-slate-700">Session Metadata</span>
                           <span className="text-[10px] font-semibold bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full border border-sky-200">Secure Session</span>
@@ -832,15 +829,15 @@
                         <div className="pt-2 border-t border-slate-100">
                           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Extracted Symptoms</span>
                           <div className="flex flex-wrap gap-1.5">
-                            <span className="text-xs bg-[#1e293b] text-white px-2.5 py-0.5 rounded-md font-medium">Chest Pain (Acute)</span>
-                            <span className="text-xs bg-[#1e293b] text-white px-2.5 py-0.5 rounded-md font-medium">Shortness of Breath</span>
+                            <span className="text-xs bg-[#0c2340] text-white px-2.5 py-0.5 rounded-md font-medium">Chest Pain (Acute)</span>
+                            <span className="text-xs bg-[#0c2340] text-white px-2.5 py-0.5 rounded-md font-medium">Shortness of Breath</span>
                             <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-medium">+ Onset: Morning</span>
                           </div>
                         </div>
                       </div>
 
                       {/* Clinical AI Core (Dark Navy Card) */}
-                      <div className="bg-[#132238] text-white rounded-2xl p-5 shadow-md space-y-2">
+                      <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-2">
                         <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold">
                           <span>⚙</span>
                           <span>CLINICAL AI CORE</span>
@@ -858,7 +855,7 @@
                   </div>
                 )}
 
-                {/* --- STEP 3: SYNTHESIS & REVIEW (IMAGE 5 EXACT) --- */}
+                {/* --- STEP 3: SYNTHESIS & REVIEW (IMAGE 1 EXACT) --- */}
                 {workflowStep === 3 && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -879,7 +876,7 @@
                         <button
                           type="button"
                           onClick={handleProceedToEvaluation}
-                          className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f172a] hover:bg-slate-800 text-white shadow-sm flex items-center gap-1.5"
+                          className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f2444] hover:bg-[#09182d] text-white shadow-sm flex items-center gap-1.5"
                         >
                           <span>✔</span>
                           <span>Proceed to Recommendation</span>
@@ -897,10 +894,10 @@
                       </p>
                     </div>
 
-                    {/* 3 Cards Grid (Image 5) */}
+                    {/* 3 Cards Grid (Image 1) */}
                     <div className="grid grid-cols-3 gap-4">
                       {/* CARD 1 */}
-                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
                             <span className="text-sky-600">CARD 1</span>
@@ -917,7 +914,7 @@
                       </div>
 
                       {/* CARD 2 */}
-                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
                             <span className="text-rose-600">CARD 2</span>
@@ -953,7 +950,7 @@
                       </div>
 
                       {/* CARD 3 */}
-                      <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
                             <span className="text-slate-400">CARD 3</span>
@@ -990,8 +987,8 @@
                       </div>
                     </div>
 
-                    {/* Explainability Banner (Image 5) */}
-                    <div className="bg-white p-5 rounded-xl border border-slate-200/80 flex items-center justify-between shadow-sm">
+                    {/* Explainability Banner (Image 1) */}
+                    <div className="bg-white p-5 rounded-xl border border-[#e2e8f0] flex items-center justify-between shadow-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                           🛡
@@ -1011,7 +1008,7 @@
                   </div>
                 )}
 
-                {/* --- STEP 4: EVALUATION RESULT (IMAGE 4 EXACT) --- */}
+                {/* --- STEP 4: EVALUATION RESULT (IMAGE 2 EXACT) --- */}
                 {workflowStep === 4 && (
                   <div className="space-y-6">
                     {/* Header */}
@@ -1035,7 +1032,7 @@
                         </button>
                         <button
                           type="button"
-                          onClick={triggerEscalation}
+                          onClick={() => setShowEscalatedModal(true)}
                           className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#b91c1c] hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5"
                         >
                           <span>Escalate to Human Reviewer</span>
@@ -1044,7 +1041,7 @@
                       </div>
                     </div>
 
-                    {/* Red Protocol Status Banner (Image 4) */}
+                    {/* Red Protocol Status Banner (Image 2) */}
                     <div className="bg-[#fee2e2] border border-rose-200 rounded-2xl p-6 shadow-sm space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-4">
@@ -1072,19 +1069,19 @@
                       </div>
                     </div>
 
-                    {/* Two Column Grid */}
+                    {/* Two Column Grid (Image 2) */}
                     <div className="grid grid-cols-3 gap-6">
                       {/* Left Column: Why Rule Trigger Analysis + Evidence Audit (2 cols) */}
                       <div className="col-span-2 space-y-5">
                         
                         {/* Why? Rule Trigger Analysis Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
+                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
                           <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                             <div>
                               <h4 className="text-xs font-bold text-slate-900">Why? Rule Trigger Analysis</h4>
                               <p className="text-[11px] text-slate-400">Deterministic rule match identified in patient intake questionnaire.</p>
                             </div>
-                            <span className="px-2.5 py-0.5 bg-[#1e293b] text-white text-[11px] font-mono font-bold rounded">
+                            <span className="px-2.5 py-0.5 bg-[#0f2444] text-white text-[11px] font-mono font-bold rounded">
                               Rule CP-01
                             </span>
                           </div>
@@ -1111,7 +1108,7 @@
                         </div>
 
                         {/* Evidence & Intake Data Audit Accordion */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
+                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
                           <div className="border-b border-slate-100 pb-2">
                             <h4 className="text-xs font-bold text-slate-900 flex items-center justify-between">
                               <span>Evidence & Intake Data Audit</span>
@@ -1155,11 +1152,11 @@
 
                       </div>
 
-                      {/* Right Column: Routing Protocol, Decision Basis, Patient Profile (Image 4) */}
+                      {/* Right Column: Routing Protocol, Decision Basis, Patient Profile (Image 2) */}
                       <div className="space-y-4">
                         
                         {/* Routing Protocol Dark Card */}
-                        <div className="bg-[#132238] text-white rounded-2xl p-5 shadow-md space-y-3">
+                        <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-3">
                           <div className="flex items-center gap-1.5 text-sky-400 text-[10px] font-bold uppercase tracking-wider">
                             <span>✚</span>
                             <span>ROUTING PROTOCOL</span>
@@ -1188,7 +1185,7 @@
 
                           <button
                             type="button"
-                            onClick={triggerEscalation}
+                            onClick={() => setShowEscalatedModal(true)}
                             className="w-full py-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 mt-2"
                           >
                             <span>Escalate to Human Reviewer</span>
@@ -1197,7 +1194,7 @@
                         </div>
 
                         {/* Decision Basis Card */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-2 text-xs">
+                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm space-y-2 text-xs">
                           <div className="flex items-center gap-1.5 font-bold text-slate-900">
                             <span>✔</span>
                             <span>Decision Basis</span>
@@ -1213,8 +1210,8 @@
                           </div>
                         </div>
 
-                        {/* Patient Profile Card (Image 4) */}
-                        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-2">
+                        {/* Patient Profile Card (Image 2) */}
+                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm space-y-2">
                           <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             <span>PATIENT PROFILE</span>
                             <span>Age 58 • Male</span>
@@ -1246,11 +1243,10 @@
               </main>
             )}
 
-            {/* ===================== RULES (IMAGE 6 EXACT) ===================== */}
+            {/* ===================== RULES CLINICAL GOVERNANCE ===================== */}
             {currentView === "rules" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-2 border-b border-slate-200/80">
+                <div className="flex items-center justify-between pb-2 border-b border-[#e2e8f0]">
                   <div>
                     <div className="flex items-center gap-2 text-[10px] font-bold text-sky-600 uppercase tracking-wider">
                       <span>CLINICAL GOVERNANCE</span>
@@ -1263,36 +1259,26 @@
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => alert("New rule creation requires Clinical Governance Board authorization.")}
-                      className="bg-[#0f172a] hover:bg-slate-800 text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5"
+                      className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm"
                     >
-                      <span>+ Create Rule</span>
+                      + Create Rule
                     </button>
                     <button
                       onClick={() => window.print()}
-                      className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5"
+                      className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm"
                     >
-                      <span>Export Audit Log</span>
+                      Export Audit Log
                     </button>
                   </div>
                 </div>
 
-                {/* Filter Tabs (Image 6) */}
                 <div className="flex items-center gap-2 flex-wrap text-xs">
-                  {[
-                    "All Categories (24)",
-                    "Fever (4)",
-                    "Injury (6)",
-                    "Chest Pain (5)",
-                    "Breathing Difficulty (5)",
-                    "Abdominal Pain (4)"
-                  ].map(tab => (
+                  {["All Categories (24)", "Fever (4)", "Injury (6)", "Chest Pain (5)", "Breathing Difficulty (5)", "Abdominal Pain (4)"].map(tab => (
                     <button
                       key={tab}
                       onClick={() => setSelectedRuleCategory(tab)}
                       className={`px-3.5 py-1.5 rounded-full font-semibold transition-all ${
-                        selectedRuleCategory === tab
-                          ? "bg-[#0f172a] text-white shadow-sm"
-                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        selectedRuleCategory === tab ? "bg-[#0f2444] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
                       {tab}
@@ -1300,10 +1286,7 @@
                   ))}
                 </div>
 
-                {/* Grid: 2 Columns of Cards vs Rule Inspector (Image 6) */}
                 <div className="grid grid-cols-3 gap-6">
-                  
-                  {/* Left: 2 Columns of Rule Cards */}
                   <div className="col-span-2 grid grid-cols-2 gap-4">
                     {filteredRules.map((rule) => {
                       const isImm = rule.priority.toLowerCase() === "immediate";
@@ -1314,7 +1297,7 @@
                           key={rule.id}
                           onClick={() => setInspectedRule(rule)}
                           className={`bg-white rounded-2xl p-5 border cursor-pointer transition-all shadow-sm flex flex-col justify-between ${
-                            isSelected ? "border-sky-600 ring-2 ring-sky-500/20" : "border-slate-200/80 hover:border-slate-300"
+                            isSelected ? "border-sky-600 ring-2 ring-sky-500/20" : "border-[#e2e8f0] hover:border-slate-300"
                           }`}
                         >
                           <div>
@@ -1331,186 +1314,72 @@
                             <h4 className="font-bold text-xs text-slate-900 mt-2">{rule.title}</h4>
                             <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">{rule.description}</p>
                           </div>
-
                           <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] mt-4">
-                            <span className="text-slate-400">
-                              {isImm ? "Human Review" : "Automated Route"}
-                            </span>
-                            <span className="text-sky-600 font-semibold hover:underline">
-                              View Logic →
-                            </span>
+                            <span className="text-slate-400">{isImm ? "Human Review" : "Automated Route"}</span>
+                            <span className="text-sky-600 font-semibold hover:underline">View Logic →</span>
                           </div>
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Right: Rule Inspector Card (Image 6) */}
                   {inspectedRule && (
-                    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm space-y-4">
+                    <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
-                          <span>✔</span>
-                          <span>Rule Inspector</span>
-                        </div>
-                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                          • Active
-                        </span>
+                        <span className="text-xs font-bold text-slate-800">Rule Inspector</span>
+                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">• Active</span>
                       </div>
-
                       <div>
                         <div className="text-[10px] font-mono text-slate-400">{inspectedRule.id} • {inspectedRule.category}</div>
                         <h4 className="text-sm font-bold text-slate-900 mt-0.5">{inspectedRule.title}</h4>
-                        
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">
-                            Priority: {inspectedRule.priority}
-                          </span>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                            Action: {inspectedRule.priority === "Immediate" ? "Human Review" : "Automated Route"}
-                          </span>
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">Priority: {inspectedRule.priority}</span>
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Action: Human Review</span>
                         </div>
                       </div>
-
-                      {/* Deterministic Rule Logic Box (Image 6) */}
                       <div>
-                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">
-                          DETERMINISTIC RULE LOGIC
-                        </span>
-                        <div className="p-3 bg-slate-50 text-slate-800 font-mono text-[11px] rounded-xl border border-slate-200/80 leading-relaxed">
+                        <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">DETERMINISTIC RULE LOGIC</span>
+                        <div className="p-3 bg-slate-50 text-slate-800 font-mono text-[11px] rounded-xl border border-slate-200 leading-relaxed">
                           {inspectedRule.deterministic_logic}
                         </div>
                       </div>
-
-                      {/* Meta list */}
                       <div className="space-y-2 text-[11px] pt-2 border-t border-slate-100">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Approved By</span>
-                          <span className="font-bold text-slate-800">{inspectedRule.approved_by}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Last Revision</span>
-                          <span className="font-semibold text-slate-800">{inspectedRule.last_revision}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Triggers (Last 30d)</span>
-                          <span className="font-bold text-slate-800 font-mono">{inspectedRule.triggers_30d.toLocaleString()} evaluations</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Audit Status</span>
-                          <span className="font-bold text-emerald-600">Fully Verified</span>
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="pt-2 border-t border-slate-100 space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSimData({
-                              id: inspectedRule.id,
-                              outcome: "DETERMINISTIC RULE MATCH POSITIVE",
-                              acuity: inspectedRule.priority
-                            });
-                            setShowSimModal(true);
-                          }}
-                          className="w-full py-2 bg-[#0f172a] hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm"
-                        >
-                          <span>▶</span>
-                          <span>Test Rule against Simulator</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => alert(`Rule ${inspectedRule.id} verified and locked under Clinical Board Revision 4.2.`)}
-                          className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold"
-                        >
-                          View Version History
-                        </button>
+                        <div className="flex justify-between"><span className="text-slate-400">Approved By</span><span className="font-bold text-slate-800">{inspectedRule.approved_by}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-400">Last Revision</span><span className="font-semibold text-slate-800">{inspectedRule.last_revision}</span></div>
+                        <div className="flex justify-between"><span className="text-slate-400">Triggers (Last 30d)</span><span className="font-bold text-slate-800 font-mono">{inspectedRule.triggers_30d.toLocaleString()} evaluations</span></div>
+                        <div className="flex justify-between"><span className="text-slate-400">Audit Status</span><span className="font-bold text-emerald-600">Fully Verified</span></div>
                       </div>
                     </div>
                   )}
-
                 </div>
-
-                {/* Zero Black-Box Guarantee Footer (Image 6) */}
-                <div className="p-4 bg-white rounded-2xl border-l-4 border-l-sky-500 border border-slate-200/80 flex items-center gap-4 shadow-sm">
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
-                    🛡
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">Zero Black-Box Guarantee</h4>
-                    <p className="text-[11px] text-slate-500 mt-0.5">TriageAI operates exclusively on auditable, rule-grounded clinical pathways. Every routing decision links directly to verified medical board protocols with complete traceability.</p>
-                  </div>
-                </div>
-
               </main>
             )}
 
-            {/* ===================== TRIAGE NOTE DOCUMENT (IMAGE 7 EXACT) ===================== */}
+            {/* ===================== TRIAGE NOTE OFFICIAL DOCUMENT ===================== */}
             {currentView === "note" && (
               <main className="p-8 max-w-4xl mx-auto w-full space-y-6">
-                
-                {/* Back button & top bar (Image 7) */}
-                <div className="flex items-center justify-between no-print">
+                <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setCurrentView("workflow")}
-                      className="p-1 rounded text-slate-500 hover:text-slate-800"
-                    >
-                      ←
-                    </button>
+                    <button onClick={() => setCurrentView("workflow")} className="p-1 rounded text-slate-500 hover:text-slate-800">←</button>
                     <div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CLINICAL DOCUMENT</div>
                       <h2 className="text-base font-bold text-slate-900">Triage Note #TR-8849-DX</h2>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => window.print()}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm flex items-center gap-1"
-                    >
-                      <span>🖨</span>
-                      <span>Print Note</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const blob = new Blob([JSON.stringify(triageNote || {}, null, 2)], { type: "application/json" });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = "TriageNote-TR-8849-DX.json";
-                        a.click();
-                      }}
-                      className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm flex items-center gap-1"
-                    >
-                      <span>⬇</span>
-                      <span>Export</span>
-                    </button>
-                    <button
-                      onClick={triggerEscalation}
-                      className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f172a] hover:bg-slate-800 text-white shadow-sm flex items-center gap-1"
-                    >
-                      <span>↗</span>
-                      <span>Share with Reviewer</span>
-                    </button>
+                    <button onClick={() => window.print()} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Print Note</button>
+                    <button onClick={() => alert("Exported JSON.")} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Export</button>
+                    <button onClick={() => setShowEscalatedModal(true)} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f2444] text-white shadow-sm">Share with Reviewer</button>
                   </div>
                 </div>
 
-                {/* Document Body (Image 7) */}
-                <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm space-y-6">
-                  
-                  {/* Clinical Intake Record Header */}
+                <div className="bg-white rounded-2xl border border-[#e2e8f0] p-8 shadow-sm space-y-6">
                   <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0f172a] text-white flex items-center justify-center font-bold text-lg">
-                        ✚
-                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-[#0f2444] text-white flex items-center justify-center font-bold text-lg">✚</div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase bg-sky-50 text-sky-700 px-2 py-0.5 rounded">
-                            TRIAGE NOTE
-                          </span>
+                          <span className="text-[10px] font-bold uppercase bg-sky-50 text-sky-700 px-2 py-0.5 rounded">TRIAGE NOTE</span>
                           <span className="text-[10px] font-mono text-slate-400">ID: PT-99281-A</span>
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 mt-0.5">Clinical Intake & Assessment Record</h3>
@@ -1522,23 +1391,19 @@
                     </div>
                   </div>
 
-                  {/* Red Recommendation Banner (Image 7) */}
                   <div className="bg-[#fee2e2] border border-rose-200 rounded-xl p-4 space-y-1">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
                         <span>*</span>
                         <span>Recommendation: ● IMMEDIATE ACUITY</span>
                       </div>
-                      <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded">
-                        Level 1 - Resuscitation
-                      </span>
+                      <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded">Level 1 - Resuscitation</span>
                     </div>
                     <p className="text-xs text-rose-950 font-medium">
                       Routing: <strong>Emergency / Human Clinical Assessment</strong> required immediately. Patient exhibits high-risk cardiac and respiratory indicators.
                     </p>
                   </div>
 
-                  {/* 2-Column: Chief Complaint & Original Description (Image 7) */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">PRIMARY CATEGORY</span>
@@ -1546,135 +1411,25 @@
                       <div className="p-3 bg-white rounded-lg border border-slate-200/80 text-xs text-slate-800">
                         Acute chest pain radiating to left jaw accompanied by acute shortness of breath and diaphoresis.
                       </div>
-                      <div className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                        <span>✔</span>
-                        <span>Validated by Clinical NLP Engine v2.4</span>
-                      </div>
                     </div>
-
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">VERBATIM INPUT</span>
                       <h4 className="text-xs font-bold text-slate-900">Patient's Original Description</h4>
                       <div className="p-3 bg-white rounded-lg border border-slate-200/80 text-xs text-slate-800 italic">
                         &ldquo;It feels like an elephant is sitting right on my chest, and I can't catch my breath no matter how hard I try. Started about 20 minutes ago while walking.&rdquo;
                       </div>
-                      <div className="text-[10px] text-slate-400 font-mono">
-                        🎙 Voice intake transcript timestamp: 14:41:05
-                      </div>
                     </div>
                   </div>
-
-                  {/* 2-Column: Established vs Unknown Tables (Image 7) */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2.5">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                          <span>✔</span>
-                          <span>Information Established</span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">4 Data Points</span>
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Pain Localization</span>
-                          <span className="font-bold text-slate-800">Substernal / Left Radiating</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Respiratory Distress</span>
-                          <span className="font-bold text-rose-600">Present (SpO2 91%)</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Onset Duration</span>
-                          <span className="font-semibold text-slate-800">~20 minutes acute</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Associated Symptoms</span>
-                          <span className="font-semibold text-slate-800">Diaphoresis, Anxiety</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-white rounded-xl border border-slate-200 space-y-2.5">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                        <div className="flex items-center gap-1 text-xs font-bold text-slate-900">
-                          <span>?</span>
-                          <span>Information Still Unknown</span>
-                        </div>
-                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">3 Pending</span>
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Prior Cardiac History</span>
-                          <span className="font-semibold text-slate-700">Unconfirmed (Patient unsure)</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">Current Medication List</span>
-                          <span className="font-semibold text-slate-700">Unavailable at intake</span>
-                        </div>
-                        <div className="flex justify-between py-1 border-b border-slate-50">
-                          <span className="text-slate-500">12-Lead ECG Snapshot</span>
-                          <span className="font-semibold text-slate-700">Awaiting bedside acquisition</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 3 Columns: Protocol Match, Decision Basis, Safety Status (Image 7) */}
-                  <div className="grid grid-cols-3 gap-4 text-xs">
-                    <div className="bg-[#16253b] text-white p-4 rounded-xl space-y-2">
-                      <span className="text-[10px] font-bold uppercase text-sky-400 tracking-wider block">PROTOCOL MATCH</span>
-                      <h5 className="font-bold text-white text-xs">Rule Applied</h5>
-                      <span className="inline-block bg-[#0b1420] text-sky-300 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700">
-                        CP-01
-                      </span>
-                      <p className="text-[11px] text-slate-300 leading-relaxed">
-                        Chest Pain + Breathing Difficulty protocol triggered.
-                      </p>
-                    </div>
-
-                    <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-2">
-                      <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">ALGORITHMIC LOGIC</span>
-                      <h5 className="font-bold text-slate-900 text-xs">Decision Basis</h5>
-                      <p className="text-[11px] text-slate-600 leading-relaxed">
-                        Predefined triage rule CP-01 mandates immediate escalation when crushing substernal chest pain presents with acute dyspnea and diaphoresis, bypassing queue limits.
-                      </p>
-                    </div>
-
-                    <div className="bg-[#fef2f2] border border-rose-200 p-4 rounded-xl space-y-2">
-                      <span className="text-[10px] font-bold uppercase text-rose-500 tracking-wider block">COMPLIANCE & SAFETY</span>
-                      <h5 className="font-bold text-rose-950 text-xs">Safety Status</h5>
-                      <div className="text-rose-700 font-bold text-xs flex items-center gap-1">
-                        <span>⚠</span>
-                        <span>Human Review Required</span>
-                      </div>
-                      <p className="text-[10px] text-rose-900 leading-relaxed">
-                        Mandated by clinical safety governance.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Footer (Image 7) */}
-                  <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
-                    <div className="flex items-center gap-2">
-                      <span>🔒</span>
-                      <span>HIPAA Compliant Encrypted Clinical Record • TriageAI Clinical Core v2.4</span>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <span>Attending Physician: <strong>Dr. Sarah Chen, MD</strong></span>
-                      <span>Signature: <strong className="underline font-serif italic">S. Chen, Verified</strong></span>
-                    </div>
-                  </div>
-
                 </div>
               </main>
             )}
 
-            {/* Other views */}
+            {/* Simple fallbacks for remaining views */}
             {currentView === "active-assessments" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">Active Queue Management</h2>
-                <div className="bg-white rounded-xl border border-slate-200 p-4">
-                  <p className="text-xs text-slate-500">Reviewing real-time patient triage queue. Click any patient to inspect clinical record.</p>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
+                  <p className="text-xs text-slate-500">Real-time triage queue stream active with 14 walk-in sessions.</p>
                 </div>
               </main>
             )}
@@ -1682,7 +1437,7 @@
             {currentView === "history" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">Triage History Records</h2>
-                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <p className="text-xs text-slate-500">Archived patient intake sessions and deterministic audit notes.</p>
                 </div>
               </main>
@@ -1691,7 +1446,7 @@
             {currentView === "escalations" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
                 <h2 className="text-xl font-bold text-rose-700">Active Human Escalations</h2>
-                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4">
+                <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6">
                   <p className="text-xs text-rose-900 font-semibold">5 cases flagged for mandatory attending clinician bedside review.</p>
                 </div>
               </main>
@@ -1700,7 +1455,7 @@
             {currentView === "analytics" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
                 <h2 className="text-xl font-bold text-slate-900">Clinical Analytics</h2>
-                <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6">
                   <p className="text-xs text-slate-500">Throughput, SLA adherence, and complaint track breakdowns.</p>
                 </div>
               </main>
@@ -1711,7 +1466,7 @@
           {/* Quick Triage Modal */}
           {showQuickTriage && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                   <h3 className="font-bold text-sm text-slate-900">Quick Walk-in Triage</h3>
                   <button onClick={() => setShowQuickTriage(false)}>✕</button>
@@ -1731,7 +1486,7 @@
                       setWorkflowStep(1);
                       setCurrentView("workflow");
                     }}
-                    className="px-4 py-1.5 bg-[#0f172a] text-white text-xs font-semibold rounded-lg"
+                    className="px-4 py-1.5 bg-[#0f2444] text-white text-xs font-semibold rounded-lg"
                   >
                     Start Triage
                   </button>
@@ -1743,43 +1498,19 @@
           {/* Escalation Dispatched Modal */}
           {showEscalatedModal && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl text-center space-y-3">
+              <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
                 <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-xl font-bold">
                   ✔
                 </div>
                 <h3 className="font-bold text-base text-slate-900">Human Review Dispatched</h3>
                 <p className="text-xs text-slate-600">
-                  Case escalated to Emergency Triage Unit. Attending Physician Dr. Sarah Chen notified. SLA &lt; 2 mins.
+                  Case escalated to Emergency Triage Unit. Attending Physician Dr. Sarah Chen notified. SLA &lt; 2 mins active.
                 </p>
                 <button
                   onClick={() => setShowEscalatedModal(false)}
-                  className="w-full py-2 bg-[#0f172a] text-white text-xs font-bold rounded-lg mt-2"
+                  className="w-full py-2 bg-[#0f2444] text-white text-xs font-bold rounded-lg mt-2"
                 >
                   Close
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Rule Simulator Modal */}
-          {showSimModal && simData && (
-            <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl space-y-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <h4 className="text-xs font-bold text-slate-900">Simulator: Rule {simData.id}</h4>
-                  <button onClick={() => setShowSimModal(false)}>✕</button>
-                </div>
-                <div className="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-lg font-mono">
-                  {simData.outcome}
-                </div>
-                <div className="text-xs text-slate-600">
-                  Acuity: <strong>{simData.acuity}</strong> | SLA: <strong>Compliant</strong>
-                </div>
-                <button
-                  onClick={() => setShowSimModal(false)}
-                  className="w-full py-1.5 bg-[#0f172a] text-white text-xs font-bold rounded-lg"
-                >
-                  Done
                 </button>
               </div>
             </div>
