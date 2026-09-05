@@ -13,7 +13,7 @@ from src.models.schemas import (
     QuestionItem
 )
 from src.engine.triage_engine import DeterministicTriageEngine
-from src.llm/gemini_triage import GeminiTriageClient
+from src.llm.gemini_triage import GeminiTriageClient
 from src.rag.local_retriever import LocalRuleRetriever
 
 router = APIRouter(prefix="/api")
