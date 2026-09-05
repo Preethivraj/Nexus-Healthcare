@@ -1,0 +1,24 @@
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment keys
+.env
+.env.local
+
+# Node modules (frontend source build artifacts are kept in frontend/dist)
+frontend/node_modules/
+node_modules/
+
+# IDE / System
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

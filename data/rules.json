@@ -1,0 +1,517 @@
+{
+  "governance": {
+    "version": "4.2 Active",
+    "clinical_board": "National Institute of Emergency Medicine (NIEM) Clinical Protocol Board",
+    "chief_medical_officer": "Dr. Rajesh Sharma, MD (Emergency Medicine)",
+    "attending_physician": "Dr. Sarah Chennupati, MD (Lead Attending)",
+    "audit_status": "Fully Verified & Board Approved",
+    "last_revision": "2024-01-15"
+  },
+  "rules": [
+    {
+      "id": "CP-01",
+      "category": "Chest Pain",
+      "title": "Chest Pain + Breathing Difficulty",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Emergent",
+      "action": "Immediate Clinical Routing & Human Assessment",
+      "target_department": "Emergency Triage Unit (Cath Lab on Standby)",
+      "escalation_sla": "Immediate (< 2 mins)",
+      "required_staffing": "Attending Physician / Senior Staff Nurse",
+      "deterministic_logic": "IF Chest pain = Yes AND Breathing difficulty = Yes THEN Immediate human assessment and bypass queue.",
+      "criteria": {
+        "chest_pain": true,
+        "breathing_difficulty": true
+      },
+      "symptom_cluster": "Symptom Cluster #4 (Cardiopulmonary Distress)",
+      "description": "Combined acute cardiac and respiratory distress screening indicating potential acute coronary syndrome or pulmonary embolism.",
+      "approved_by": "Dr. Ananya Iyer, Chief of Cardiology",
+      "last_revision": "2024-01-10",
+      "triggers_30d": 4821
+    },
+    {
+      "id": "CP-02",
+      "category": "Chest Pain",
+      "title": "Atypical Chest Discomfort with Normal Vitals",
+      "priority": "Standard",
+      "acuity_level": "Level 3 - Urgent / Evaluation",
+      "action": "Automated Observation & Routine ECG",
+      "target_department": "Acute Medical Assessment Unit",
+      "escalation_sla": "Within 30 mins",
+      "required_staffing": "Triage Medical Officer",
+      "deterministic_logic": "IF Chest pain = Yes AND Radiating = No AND Shortness of breath = No AND Normal vitals THEN Standard protocol with serial ECG.",
+      "criteria": {
+        "chest_pain": true,
+        "radiation": false,
+        "breathing_difficulty": false
+      },
+      "symptom_cluster": "Symptom Cluster #1 (Localized Non-Exertional Discomfort)",
+      "description": "Streamlined pathway for low-risk chest discomfort cases with normal vitals and absence of radiating pain.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-08",
+      "triggers_30d": 1240
+    },
+    {
+      "id": "CP-03",
+      "category": "Chest Pain",
+      "title": "Chest Pain Radiating to Left Arm, Neck, or Jaw",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Emergent",
+      "action": "Immediate Human Escalation & Stat 12-Lead ECG Acquisition",
+      "target_department": "Emergency Resuscitation Unit",
+      "escalation_sla": "Immediate (< 3 mins)",
+      "required_staffing": "Attending Physician / Cardiology Fellow",
+      "deterministic_logic": "IF Chest pain = Yes AND Radiation = Yes (Left Arm / Jaw / Neck) THEN Escalate to Human Reviewer Immediately.",
+      "criteria": {
+        "chest_pain": true,
+        "radiation": true
+      },
+      "symptom_cluster": "Symptom Cluster #2 (Anginal Radiation Pattern)",
+      "description": "Classic anginal radiation pattern carrying elevated probability of acute myocardial infarction.",
+      "approved_by": "Dr. Ananya Iyer, Chief of Cardiology",
+      "last_revision": "2024-01-05",
+      "triggers_30d": 3120
+    },
+    {
+      "id": "CP-04",
+      "category": "Chest Pain",
+      "title": "Chest Pain Accompanied by Diaphoresis or Syncope",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Emergent",
+      "action": "Immediate Resuscitation Bay Allocation",
+      "target_department": "Emergency Resuscitation Bay",
+      "escalation_sla": "Immediate (< 2 mins)",
+      "required_staffing": "Emergency Resuscitation Team",
+      "deterministic_logic": "IF Chest pain = Yes AND (Diaphoresis = Yes OR Syncope = Yes) THEN Trigger Immediate Resuscitation Bay.",
+      "criteria": {
+        "chest_pain": true,
+        "diaphoresis_or_syncope": true
+      },
+      "symptom_cluster": "Symptom Cluster #3 (Cardiovascular Collapse Risk)",
+      "description": "Autonomic symptoms accompanying chest pain indicating acute cardiogenic or vasovagal shock.",
+      "approved_by": "Dr. Suresh Menon, Senior Critical Care Specialist",
+      "last_revision": "2023-12-20",
+      "triggers_30d": 980
+    },
+    {
+      "id": "CP-05",
+      "category": "Chest Pain",
+      "title": "Pleuritic Chest Pain Aggravated by Inspiration",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Emergent / Urgent",
+      "action": "Urgent Chest Imaging & D-Dimer Protocol",
+      "target_department": "Emergency Observation Unit",
+      "escalation_sla": "Within 15 mins",
+      "required_staffing": "Emergency Physician",
+      "deterministic_logic": "IF Chest pain = Yes AND Pleuritic nature = Yes THEN Urgent medical evaluation for pulmonary embolism or pleuritis.",
+      "criteria": {
+        "chest_pain": true,
+        "pleuritic": true
+      },
+      "symptom_cluster": "Symptom Cluster #5 (Pleural / Thromboembolic Risk)",
+      "description": "Sharp pain aggravated by deep inspiration requiring exclusion of pulmonary embolism and pneumothorax.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-12",
+      "triggers_30d": 745
+    },
+    {
+      "id": "BR-01",
+      "category": "Breathing Difficulty",
+      "title": "Severe Dyspnea with Stridor or Cyanosis",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Airway Alert",
+      "action": "Code Blue / Airway Rapid Response",
+      "target_department": "Resuscitation Trauma Bay 1",
+      "escalation_sla": "Immediate (< 1 min)",
+      "required_staffing": "Anaesthesiologist / Airway Lead",
+      "deterministic_logic": "IF Breathing difficulty = Severe AND (Stridor = Yes OR Cyanosis = Yes) THEN Trigger Immediate Airway Alert.",
+      "criteria": {
+        "breathing_difficulty": true,
+        "stridor_or_cyanosis": true
+      },
+      "symptom_cluster": "Cluster #B1 (Upper Airway Compromise)",
+      "description": "Life-threatening acute upper airway obstruction or respiratory failure.",
+      "approved_by": "Dr. Suresh Menon, Critical Care",
+      "last_revision": "2023-11-18",
+      "triggers_30d": 412
+    },
+    {
+      "id": "BR-02",
+      "category": "Breathing Difficulty",
+      "title": "Severe Dyspnea & SpO2 < 92%",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Emergent",
+      "action": "Immediate High-Flow Oxygen & Human Assessment",
+      "target_department": "Emergency Resuscitation & Acute Respiratory Unit",
+      "escalation_sla": "Immediate (< 2 mins)",
+      "required_staffing": "Attending Physician / Respiratory Therapist",
+      "deterministic_logic": "IF Breathing difficulty = Yes AND SpO2 < 92% THEN Immediate clinical intervention and oxygenation.",
+      "criteria": {
+        "breathing_difficulty": true,
+        "hypoxemia": true
+      },
+      "symptom_cluster": "Cluster #B2 (Severe Hypoxemic Respiratory Distress)",
+      "description": "Critical threshold for hypoxemia detection and immediate respiratory support.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-02",
+      "triggers_30d": 2150
+    },
+    {
+      "id": "BR-03",
+      "category": "Breathing Difficulty",
+      "title": "Acute Exacerbation of Asthma / COPD with Audible Wheeze",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Urgent",
+      "action": "Urgent Nebulization & Clinical Assessment",
+      "target_department": "Acute Respiratory Day Care",
+      "escalation_sla": "Within 10 mins",
+      "required_staffing": "Emergency Physician",
+      "deterministic_logic": "IF Breathing difficulty = Yes AND Wheezing = Yes AND Speech intact THEN Urgent nebulization protocol.",
+      "criteria": {
+        "breathing_difficulty": true,
+        "wheezing": true
+      },
+      "symptom_cluster": "Cluster #B3 (Bronchospasm)",
+      "description": "Moderate to severe bronchospasm in known or new respiratory disease presentations.",
+      "approved_by": "Dr. Priya Nair, Pulmonologist",
+      "last_revision": "2024-01-04",
+      "triggers_30d": 1820
+    },
+    {
+      "id": "BR-04",
+      "category": "Breathing Difficulty",
+      "title": "Inability to Speak Full Sentences (Word Dyspnea)",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Emergent",
+      "action": "Immediate High-Acuity Medical Assessment",
+      "target_department": "Emergency High Dependency Unit",
+      "escalation_sla": "Immediate (< 3 mins)",
+      "required_staffing": "Senior Emergency Registrar",
+      "deterministic_logic": "IF Breathing difficulty = Yes AND Speech impaired (Word dyspnea) THEN Immediate High-Acuity bed.",
+      "criteria": {
+        "breathing_difficulty": true,
+        "speech_impaired": true
+      },
+      "symptom_cluster": "Cluster #B4 (Work of Breathing Failure)",
+      "description": "Marker of respiratory muscle exhaustion and imminent respiratory arrest.",
+      "approved_by": "Dr. Suresh Menon, Critical Care",
+      "last_revision": "2023-12-14",
+      "triggers_30d": 890
+    },
+    {
+      "id": "BR-05",
+      "category": "Breathing Difficulty",
+      "title": "Mild Exertional Shortness of Breath with Normal Speech & SpO2",
+      "priority": "Standard",
+      "acuity_level": "Level 4 - Routine / Outpatient",
+      "action": "Routine Vital Check & Outpatient Respiratory Evaluation",
+      "target_department": "General Medicine Clinic",
+      "escalation_sla": "Within 60 mins",
+      "required_staffing": "Duty Medical Officer",
+      "deterministic_logic": "IF Breathing difficulty = Mild AND SpO2 >= 95% AND Rest dyspnea = No THEN Routine clinical consultation.",
+      "criteria": {
+        "breathing_difficulty": false,
+        "mild_exertional": true
+      },
+      "symptom_cluster": "Cluster #B5 (Subacute Exertional Dyspnea)",
+      "description": "Gradual onset breathlessness without resting tachypnea or desaturation.",
+      "approved_by": "Dr. Priya Nair, Pulmonologist",
+      "last_revision": "2024-01-11",
+      "triggers_30d": 640
+    },
+    {
+      "id": "FE-01",
+      "category": "Fever",
+      "title": "Fever with Altered Mental State or Stiff Neck (Meningism)",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Neuro Alert",
+      "action": "Immediate Lumbar Puncture Pathway & Stat Antibiotics",
+      "target_department": "Emergency Medical Intensive Care Unit",
+      "escalation_sla": "Immediate (< 5 mins)",
+      "required_staffing": "Attending Physician & Neurologist",
+      "deterministic_logic": "IF Fever = Yes AND (Altered sensorium = Yes OR Neck stiffness = Yes) THEN Immediate sepsis/meningitis escalation.",
+      "criteria": {
+        "fever": true,
+        "meningism_or_confusion": true
+      },
+      "symptom_cluster": "Cluster #F1 (CNS Infection / Meningeal Irritation)",
+      "description": "Suspected bacterial meningitis or viral encephalitis requiring stat parenteral antimicrobial therapy.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2023-12-30",
+      "triggers_30d": 310
+    },
+    {
+      "id": "FE-02",
+      "category": "Fever",
+      "title": "Fever with Hemodynamic Instability or Septic Shock Signs",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Sepsis Pathway",
+      "action": "Sepsis Bundle (< 1 Hour Protocol) & Human Review",
+      "target_department": "Emergency Resuscitation Bay",
+      "escalation_sla": "Immediate (< 5 mins)",
+      "required_staffing": "Resuscitation Team",
+      "deterministic_logic": "IF Fever = Yes AND (BP Systolic < 90 OR HR > 120 OR Extreme rigors = Yes) THEN Sepsis 6 Protocol.",
+      "criteria": {
+        "fever": true,
+        "septic_shock_risk": true
+      },
+      "symptom_cluster": "Cluster #F2 (Septicemia / Septic Shock)",
+      "description": "Severe systemic inflammatory response with end-organ hypoperfusion indicators.",
+      "approved_by": "Dr. Suresh Menon, Critical Care",
+      "last_revision": "2024-01-07",
+      "triggers_30d": 1420
+    },
+    {
+      "id": "FE-03",
+      "category": "Fever",
+      "title": "High Fever in Pediatric Patients (< 3 Months or Temp > 39°C)",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Urgent Pediatric",
+      "action": "Immediate Pediatric Triage & Stat Antipyretic",
+      "target_department": "Pediatric Emergency Ward",
+      "escalation_sla": "Within 10 mins",
+      "required_staffing": "Pediatric Emergency Specialist",
+      "deterministic_logic": "IF Fever = Yes AND (Age < 3 months OR Temperature > 39 C) THEN Urgent pediatric evaluation.",
+      "criteria": {
+        "fever": true,
+        "pediatric_high_fever": true
+      },
+      "symptom_cluster": "Cluster #F3 (Pediatric Hyperpyrexia)",
+      "description": "Rapid escalation protocol for high temperature readings or febrile young infants.",
+      "approved_by": "Dr. Kavita Narayanan, Head of Pediatrics",
+      "last_revision": "2024-01-09",
+      "triggers_30d": 2340
+    },
+    {
+      "id": "FE-04",
+      "category": "Fever",
+      "title": "Uncomplicated Low-Grade Fever with Cough/Coryza",
+      "priority": "Standard",
+      "acuity_level": "Level 4 - Routine / Ambulatory",
+      "action": "Routine Medical Outpatient Care",
+      "target_department": "General Medicine / Outpatient Clinic",
+      "escalation_sla": "Within 45 mins",
+      "required_staffing": "Ambulatory Care Physician",
+      "deterministic_logic": "IF Fever = Low-grade AND Duration < 3 days AND No red flags THEN Ambulatory general medicine clinic.",
+      "criteria": {
+        "fever": true,
+        "uncomplicated": true
+      },
+      "symptom_cluster": "Cluster #F4 (Viral Upper Respiratory Illness)",
+      "description": "Benign viral syndrome presentation with stable hemodynamics and no focal neurological or hemodynamic deficits.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-03",
+      "triggers_30d": 5600
+    },
+    {
+      "id": "IN-01",
+      "category": "Injury",
+      "title": "High-Velocity Blunt Trauma or Penetrating Injury",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Trauma Alert",
+      "action": "Trauma Team Activation (Code Yellow)",
+      "target_department": "Advanced Trauma Resuscitation Center",
+      "escalation_sla": "Immediate (< 2 mins)",
+      "required_staffing": "Trauma Surgeon, Emergency Physician, Orthopedic Fellow",
+      "deterministic_logic": "IF Injury = High velocity (RTA / Fall > 10ft) OR Penetrating wound THEN Activate Level 1 Trauma Protocol.",
+      "criteria": {
+        "injury": true,
+        "major_trauma": true
+      },
+      "symptom_cluster": "Cluster #I1 (Major Polytrauma)",
+      "description": "Trauma registry trigger for severe physical mechanism indicators, internal hemorrhage risk, or cervical spine injury.",
+      "approved_by": "Dr. Vikram Sethi, Chief of Trauma Surgery",
+      "last_revision": "2023-11-30",
+      "triggers_30d": 890
+    },
+    {
+      "id": "IN-02",
+      "category": "Injury",
+      "title": "Active Uncontrolled Arterial Hemorrhage",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Hemorrhage Control",
+      "action": "Direct Pressure, Tourniquet Protocol, Stat Surgical Review",
+      "target_department": "Trauma Resuscitation Bay",
+      "escalation_sla": "Immediate (< 1 min)",
+      "required_staffing": "Emergency Trauma Lead",
+      "deterministic_logic": "IF Injury = Yes AND Active pulsing bleed = Yes THEN Direct pressure & immediate trauma team.",
+      "criteria": {
+        "injury": true,
+        "active_bleeding": true
+      },
+      "symptom_cluster": "Cluster #I2 (Exsanguinating Hemorrhage)",
+      "description": "Uncontrolled blood loss with risk of hemorrhagic shock within minutes.",
+      "approved_by": "Dr. Vikram Sethi, Chief of Trauma Surgery",
+      "last_revision": "2023-12-05",
+      "triggers_30d": 340
+    },
+    {
+      "id": "IN-03",
+      "category": "Injury",
+      "title": "Suspected Fracture with Gross Deformity or Neurovascular Deficit",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Urgent Orthopedic",
+      "action": "Immediate Splinting, Neurovascular Check & Stat Radiography",
+      "target_department": "Orthopedics & Urgent Care Unit",
+      "escalation_sla": "Within 15 mins",
+      "required_staffing": "Orthopedic Resident / Emergency Physician",
+      "deterministic_logic": "IF Injury = Limb deformity OR Pulseless extremity THEN Urgent reduction & imaging protocol.",
+      "criteria": {
+        "injury": true,
+        "deformity_or_neurovascular": true
+      },
+      "symptom_cluster": "Cluster #I3 (Complex Skeletal Injury)",
+      "description": "Dislocated joints or deformed long bone fractures with risk of compartment syndrome.",
+      "approved_by": "Dr. Arvind Swaminathan, Senior Orthopedic Consultant",
+      "last_revision": "2024-01-08",
+      "triggers_30d": 2100
+    },
+    {
+      "id": "IN-04",
+      "category": "Injury",
+      "title": "Head Injury with Loss of Consciousness or Vomiting",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Urgent Neurotrauma",
+      "action": "C-Spine Immobilization & Urgent Non-Contrast Head CT",
+      "target_department": "Emergency Neuro-Triage Unit",
+      "escalation_sla": "Within 15 mins",
+      "required_staffing": "Emergency Physician",
+      "deterministic_logic": "IF Head injury = Yes AND (LOC = Yes OR Repeated vomiting = Yes) THEN Canadian CT Head Rule Urgent Scan.",
+      "criteria": {
+        "injury": true,
+        "head_trauma_red_flags": true
+      },
+      "symptom_cluster": "Cluster #I4 (Traumatic Brain Injury Screening)",
+      "description": "Concussion red flags requiring radiological exclusion of intracranial hemorrhage.",
+      "approved_by": "Dr. Vikram Sethi, Chief of Trauma Surgery",
+      "last_revision": "2024-01-14",
+      "triggers_30d": 1640
+    },
+    {
+      "id": "IN-05",
+      "category": "Injury",
+      "title": "Minor Laceration with Controlled Bleeding",
+      "priority": "Standard",
+      "acuity_level": "Level 3 - Standard / Minor Injury",
+      "action": "Wound Cleansing & Suture Fast Track",
+      "target_department": "Emergency Fast Track / Minor Treatment Room",
+      "escalation_sla": "Within 45 mins",
+      "required_staffing": "Wound Care Specialist / Triage Nurse",
+      "deterministic_logic": "IF Injury = Superficial laceration AND Bleeding controlled AND Neurovascular intact THEN Fast Track suturing.",
+      "criteria": {
+        "injury": true,
+        "minor_laceration": true
+      },
+      "symptom_cluster": "Cluster #I5 (Superficial Soft Tissue Injury)",
+      "description": "Clean superficial skin cut suitable for primary closure under local anesthesia.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-06",
+      "triggers_30d": 4310
+    },
+    {
+      "id": "IN-06",
+      "category": "Injury",
+      "title": "Isolated Minor Ankle or Wrist Sprain",
+      "priority": "Standard",
+      "acuity_level": "Level 4 - Routine / Fast Track",
+      "action": "RICE Therapy, Weight-bearing Assessment, Plain Radiograph",
+      "target_department": "Urgent Care Minor Injury Clinic",
+      "escalation_sla": "Within 60 mins",
+      "required_staffing": "Physical Therapist / Staff Nurse",
+      "deterministic_logic": "IF Injury = Minor twist/sprain AND Ottawa rules negative THEN Standard ice, bandage, analgesia.",
+      "criteria": {
+        "injury": true,
+        "minor_sprain": true
+      },
+      "symptom_cluster": "Cluster #I6 (Low-Risk Ligamentous Strain)",
+      "description": "Ambulatory patient with localized joint tenderness following low-energy twisting.",
+      "approved_by": "Dr. Arvind Swaminathan, Senior Orthopedic Consultant",
+      "last_revision": "2024-01-05",
+      "triggers_30d": 3890
+    },
+    {
+      "id": "AB-01",
+      "category": "Abdominal Pain",
+      "title": "Sudden Severe 'Tearing' Abdominal or Back Pain",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Vascular Alert",
+      "action": "Immediate Vascular Surgeon Alert & Stat CT Angiogram",
+      "target_department": "Vascular Emergency Bay",
+      "escalation_sla": "Immediate (< 5 mins)",
+      "required_staffing": "Vascular Surgeon & Critical Care Team",
+      "deterministic_logic": "IF Abdominal pain = Sudden severe tearing OR Hypotension present THEN Rule out Ruptured AAA / Aortic Dissection.",
+      "criteria": {
+        "abdominal_pain": true,
+        "vascular_red_flag": true
+      },
+      "symptom_cluster": "Cluster #A1 (Vascular Catastrophe)",
+      "description": "High-risk presentation for leaking abdominal aortic aneurysm or mesenteric ischemia in older adults.",
+      "approved_by": "Dr. Ananya Iyer, Chief of Cardiology",
+      "last_revision": "2023-11-25",
+      "triggers_30d": 210
+    },
+    {
+      "id": "AB-02",
+      "category": "Abdominal Pain",
+      "title": "Rigid / Board-like Abdomen with Involuntary Guarding",
+      "priority": "Immediate",
+      "acuity_level": "Level 1 - Resuscitation / Acute Abdomen",
+      "action": "Immediate Surgical Consultation for Peritonitis",
+      "target_department": "Acute Surgical Assessment Unit",
+      "escalation_sla": "Immediate (< 5 mins)",
+      "required_staffing": "General Surgical Registrar & Emergency Physician",
+      "deterministic_logic": "IF Abdominal pain = Yes AND Rigidity/Rebound tenderness = Yes THEN Stat Acute Abdomen Surgical Call.",
+      "criteria": {
+        "abdominal_pain": true,
+        "peritonism": true
+      },
+      "symptom_cluster": "Cluster #A2 (Generalized Peritonitis / Perforation)",
+      "description": "Signs of visceral perforation or widespread intra-abdominal sepsis.",
+      "approved_by": "Dr. Sunita Deshmukh, Head of General Surgery",
+      "last_revision": "2024-01-04",
+      "triggers_30d": 670
+    },
+    {
+      "id": "AB-03",
+      "category": "Abdominal Pain",
+      "title": "Acute Right Lower Quadrant Pain with Fever",
+      "priority": "Urgent",
+      "acuity_level": "Level 2 - Urgent Surgical Assessment",
+      "action": "Appendicitis Diagnostic Pathway & Targeted Ultrasound",
+      "target_department": "Emergency Surgical Assessment Ward",
+      "escalation_sla": "Within 20 mins",
+      "required_staffing": "General Surgical Registrar",
+      "deterministic_logic": "IF Abdominal pain = RLQ / McBurney's AND (Fever = Yes OR Nausea = Yes) THEN Urgent Alvarado surgical protocol.",
+      "criteria": {
+        "abdominal_pain": true,
+        "rlq_fever": true
+      },
+      "symptom_cluster": "Cluster #A3 (Acute Appendicitis Pathway)",
+      "description": "Appendicitis diagnostic pathway leveraging localized abdominal tenderness, rebound sign, and systemic fever.",
+      "approved_by": "Dr. Sunita Deshmukh, Head of General Surgery",
+      "last_revision": "2024-01-12",
+      "triggers_30d": 3410
+    },
+    {
+      "id": "AB-04",
+      "category": "Abdominal Pain",
+      "title": "Mild Diffuse Cramping with Normal Bowel Sounds",
+      "priority": "Standard",
+      "acuity_level": "Level 4 - Routine / Ambulatory",
+      "action": "Standard Outpatient Clinical Assessment & Hydration",
+      "target_department": "Gastroenterology / Outpatient Clinic",
+      "escalation_sla": "Within 60 mins",
+      "required_staffing": "Duty Medical Officer",
+      "deterministic_logic": "IF Abdominal pain = Mild diffuse AND No guarding AND Normal vitals THEN Outpatient symptomatic care.",
+      "criteria": {
+        "abdominal_pain": true,
+        "mild_cramping": true
+      },
+      "symptom_cluster": "Cluster #A4 (Functional / Gastroenteritis)",
+      "description": "Mild crampy discomfort without peritoneal signs, high fever, or hemodynamic instability.",
+      "approved_by": "Dr. Rajesh Sharma, MD",
+      "last_revision": "2024-01-03",
+      "triggers_30d": 4120
+    }
+  ]
+}
