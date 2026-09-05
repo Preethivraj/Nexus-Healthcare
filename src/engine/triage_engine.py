@@ -130,10 +130,15 @@ class DeterministicTriageEngine:
             uncertain_case = True
 
         # Rule evaluation logic across 5 complaint tracks:
+        # Check explicit negative answers from clarification questions
+        no_dyspnea = answers_map.get("q_cp_br", "") == "no" or answers_map.get("q_br", "") == "no" or answers_map.get("q_0", "") == "no"
+        no_radiation = answers_map.get("q_cp_radiation", "") == "no" or answers_map.get("q_1", "") == "no"
+        no_diaphoresis = answers_map.get("q_cp_sweat", "") == "no" or answers_map.get("q_2", "") == "no"
+
         has_chest_pain = "chest" in text_lower or any("chest" in s.lower() for s in symptoms) or answers_map.get("q_cp", "") == "yes"
-        has_dyspnea = "breath" in text_lower or any("breath" in s.lower() or "dyspnea" in s.lower() for s in symptoms) or answers_map.get("q_br", "") == "yes" or answers_map.get("q_br_sudden", "") == "yes"
-        has_radiation = "arm" in text_lower or "jaw" in text_lower or "neck" in text_lower or answers_map.get("q_cp_radiation", "") == "yes"
-        has_diaphoresis = "sweat" in text_lower or "cold sweat" in text_lower or "diaphoresis" in text_lower or answers_map.get("q_cp_sweat", "") == "yes"
+        has_dyspnea = (("breath" in text_lower or any("breath" in s.lower() or "dyspnea" in s.lower() for s in symptoms) or answers_map.get("q_br", "") == "yes" or answers_map.get("q_br_sudden", "") == "yes" or answers_map.get("q_cp_br", "") == "yes") and not no_dyspnea)
+        has_radiation = (("arm" in text_lower or "jaw" in text_lower or "neck" in text_lower or answers_map.get("q_cp_radiation", "") == "yes") and not no_radiation)
+        has_diaphoresis = (("sweat" in text_lower or "cold sweat" in text_lower or "diaphoresis" in text_lower or answers_map.get("q_cp_sweat", "") == "yes") and not no_diaphoresis)
         
         has_stridor_cyanosis = answers_map.get("q_br_stridor", "") == "yes" or "blue" in text_lower or "stridor" in text_lower
         spo2_val = vitals.get("spo2", 98)
@@ -170,7 +175,7 @@ class DeterministicTriageEngine:
         elif has_tearing:
             matched_rule = self.rules_by_id["AB-01"]
             decision_basis = "Sudden severe tearing abdominal/back pain identified. High clinical risk for aortic catastrophe."
-        elif has_chest_pain and (has_dyspnea or answers_map.get("q_cp_br", "") == "yes"):
+        elif has_chest_pain and has_dyspnea:
             matched_rule = self.rules_by_id["CP-01"]
             decision_basis = "Deterministic rule CP-01 mandates immediate human review when acute chest pain presents together with breathing difficulty."
         elif has_chest_pain and has_diaphoresis:

@@ -70,6 +70,14 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
+    // Standard clinical follow-up question banks
+    const DEFAULT_QUESTIONS = [
+      { id: "q_cp_br", text: "Are you having difficulty breathing right now?", category: "Chest Pain" },
+      { id: "q_cp_radiation", text: "Does the pain spread to your left arm, neck, jaw, or back?", category: "Chest Pain" },
+      { id: "q_cp_sweat", text: "Are you experiencing cold sweating, nausea, or lightheadedness?", category: "Chest Pain" },
+      { id: "q_cp_sudden", text: "Did the chest discomfort begin suddenly within the last hour?", category: "Chest Pain" }
+    ];
+
     // Rich pre-seeded active queue demo data
     const DEMO_SESSIONS = [
       {
@@ -280,14 +288,9 @@
       const [sessionId, setSessionId] = useState("PT-8842-X");
       const [protocolName, setProtocolName] = useState("Chest Pain v4");
       const [confidenceScore, setConfidenceScore] = useState("98.4% High");
-      const [questions, setQuestions] = useState([]);
+      const [questions, setQuestions] = useState(DEFAULT_QUESTIONS);
       const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-      const [answeredQuestions, setAnsweredQuestions] = useState([
-        {
-          question_text: "Are you having difficulty breathing right now?",
-          answer: "Yes"
-        }
-      ]);
+      const [answeredQuestions, setAnsweredQuestions] = useState([]);
       const [whyAskingOpen, setWhyAskingOpen] = useState(false);
 
       // Triage Evaluation result
@@ -316,6 +319,8 @@
       // Start Assessment (Step 1 -> Step 2)
       const handleStartAssessment = async () => {
         if (!patientNarrative.trim()) return;
+        setAnsweredQuestions([]);
+        setCurrentQuestionIdx(0);
         try {
           const res = await fetch("/api/intake/understand", {
             method: "POST",
@@ -327,22 +332,31 @@
             setSessionId(data.session_id);
             setProtocolName(data.protocol_name);
             setConfidenceScore(data.confidence_score);
-            setQuestions(data.questions);
+            if (data.questions && data.questions.length > 0) {
+              setQuestions(data.questions);
+            } else {
+              setQuestions(DEFAULT_QUESTIONS);
+            }
             setCurrentQuestionIdx(0);
+            setWorkflowStep(2);
+          } else {
+            setQuestions(DEFAULT_QUESTIONS);
             setWorkflowStep(2);
           }
         } catch (e) {
+          setQuestions(DEFAULT_QUESTIONS);
           setWorkflowStep(2);
         }
       };
 
       // Answer question (Step 2)
       const handleAnswer = (ans) => {
-        const q = questions[currentQuestionIdx] || { text: "Did the chest pain begin suddenly?" };
-        const updated = [...answeredQuestions, { question_text: q.text, answer: ans }];
+        const activeList = (questions && questions.length > 0) ? questions : DEFAULT_QUESTIONS;
+        const q = activeList[currentQuestionIdx] || { id: `q_${currentQuestionIdx}`, text: "Did the chest pain begin suddenly?" };
+        const updated = [...answeredQuestions, { question_id: q.id || `q_${currentQuestionIdx}`, question_text: q.text, answer: ans }];
         setAnsweredQuestions(updated);
 
-        if (currentQuestionIdx + 1 < (questions.length || 2)) {
+        if (currentQuestionIdx + 1 < activeList.length) {
           setCurrentQuestionIdx(prev => prev + 1);
         } else {
           setWorkflowStep(3); // Go to Synthesis & Review
@@ -358,12 +372,22 @@
             body: JSON.stringify({
               session_id: sessionId,
               patient_narrative: patientNarrative,
-              answers: answeredQuestions.map((a, i) => ({ question_id: `q_${i}`, question_text: a.question_text, answer: a.answer }))
+              patient_name: selectedPatient.name,
+              age: selectedPatient.age,
+              gender: selectedPatient.gender,
+              mrn: selectedPatient.mrn,
+              answers: answeredQuestions.map((a, i) => ({
+                question_id: a.question_id || `q_${i}`,
+                question_text: a.question_text,
+                answer: a.answer
+              }))
             })
           });
           if (res.ok) {
             const note = await res.json();
             setTriageNote(note);
+            setWorkflowStep(4);
+          } else {
             setWorkflowStep(4);
           }
         } catch (e) {
@@ -398,12 +422,9 @@
         });
         setSessionId(row.id);
         setPatientNarrative(row.primary_complaint);
-        setAnsweredQuestions([
-          {
-            question_text: "Are you having difficulty breathing right now?",
-            answer: (row.primary_complaint || "").toLowerCase().includes("breath") || (row.primary_complaint || "").toLowerCase().includes("dyspnea") ? "Yes" : "No"
-          }
-        ]);
+        setAnsweredQuestions([]);
+        setQuestions(DEFAULT_QUESTIONS);
+        setCurrentQuestionIdx(0);
         setWorkflowStep(1);
         setCurrentView("workflow");
       };
@@ -1147,51 +1168,68 @@
                         </p>
                       </div>
 
-                      {/* System Response 1 (Answered) */}
-                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2">
-                        <div className="text-[10px] text-slate-400">TriageAI • 10:42 AM</div>
-                        <div className="text-xs font-semibold text-slate-800">Are you having difficulty breathing right now?</div>
-                        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
-                          <span>✔</span>
-                          <span>Answered: Yes</span>
-                        </div>
-                      </div>
+                      {/* Dynamically Render Answered Questions */}
+                      {answeredQuestions.map((item, idx) => {
+                        const isNo = (item.answer || "").toLowerCase() === "no";
+                        const isUnsure = (item.answer || "").toLowerCase().includes("sure") || (item.answer || "").toLowerCase().includes("not");
+                        return (
+                          <div key={idx} className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2">
+                            <div className="text-[10px] text-slate-400">TriageAI • Response recorded</div>
+                            <div className="text-xs font-semibold text-slate-800">{item.question_text}</div>
+                            <div className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full border ${
+                              isNo
+                                ? "bg-rose-50 text-rose-700 border-rose-200"
+                                : isUnsure
+                                ? "bg-amber-50 text-amber-800 border-amber-200"
+                                : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                            }`}>
+                              <span>{isNo ? "✖" : isUnsure ? "?" : "✔"}</span>
+                              <span>Answered: {item.answer}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
 
-                      {/* System Response 2 (Active Question with 3 Curvy Buttons) */}
-                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-4">
-                        <div className="text-[10px] text-slate-400">TriageAI • 10:43 AM</div>
-                        <div className="text-sm font-bold text-slate-900">
-                          {questions[currentQuestionIdx] ? questions[currentQuestionIdx].text : "Did the chest pain begin suddenly?"}
-                        </div>
+                      {/* Active Question with 3 Curvy Buttons */}
+                      {currentQuestionIdx < (questions.length || DEFAULT_QUESTIONS.length) && (
+                        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-4">
+                          <div className="flex items-center justify-between text-[10px] text-slate-400">
+                            <span>TriageAI • Question {currentQuestionIdx + 1} of {questions.length || DEFAULT_QUESTIONS.length}</span>
+                            <span className="font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">Live Clinical Follow-up</span>
+                          </div>
+                          <div className="text-sm font-bold text-slate-900">
+                            {(questions[currentQuestionIdx] || DEFAULT_QUESTIONS[currentQuestionIdx] || {}).text}
+                          </div>
 
-                        {/* 3 Curvy Buttons */}
-                        <div className="grid grid-cols-3 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => handleAnswer("Yes")}
-                            className="bg-white hover:bg-emerald-50 hover:border-emerald-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
-                          >
-                            <span className="text-emerald-600">✔</span>
-                            <span>Yes</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleAnswer("No")}
-                            className="bg-white hover:bg-rose-50 hover:border-rose-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
-                          >
-                            <span className="text-rose-600">✖</span>
-                            <span>No</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleAnswer("I'm not sure")}
-                            className="bg-white hover:bg-amber-50 hover:border-amber-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
-                          >
-                            <span className="text-amber-600">?</span>
-                            <span>I'm not sure</span>
-                          </button>
+                          {/* 3 Curvy Buttons */}
+                          <div className="grid grid-cols-3 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer("Yes")}
+                              className="bg-white hover:bg-emerald-50 hover:border-emerald-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all active:scale-95"
+                            >
+                              <span className="text-emerald-600 font-bold text-sm">✔</span>
+                              <span>Yes</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer("No")}
+                              className="bg-white hover:bg-rose-50 hover:border-rose-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all active:scale-95"
+                            >
+                              <span className="text-rose-600 font-bold text-sm">✖</span>
+                              <span>No</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer("I'm not sure")}
+                              className="bg-white hover:bg-amber-50 hover:border-amber-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all active:scale-95"
+                            >
+                              <span className="text-amber-600 font-bold text-sm">?</span>
+                              <span>I'm not sure</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* Progress Bar & Why asking Accordion */}
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
@@ -1199,12 +1237,17 @@
                           <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
                             <span>✔</span>
                             <div>
-                              <div>2 of 4 key questions completed</div>
-                              <div className="text-[10px] text-slate-400 font-normal">Acuity determination remaining</div>
+                              <div>{answeredQuestions.length} of {questions.length || DEFAULT_QUESTIONS.length} key questions completed</div>
+                              <div className="text-[10px] text-slate-400 font-normal">
+                                {answeredQuestions.length >= (questions.length || DEFAULT_QUESTIONS.length) ? "Acuity determination complete" : "Acuity determination in progress"}
+                              </div>
                             </div>
                           </div>
                           <div className="w-36 bg-slate-200 rounded-full h-2">
-                            <div className="bg-sky-600 h-2 rounded-full" style={{ width: "50%" }}></div>
+                            <div
+                              className="bg-sky-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(100, Math.round((answeredQuestions.length / Math.max(1, (questions.length || DEFAULT_QUESTIONS.length))) * 100))}%` }}
+                            ></div>
                           </div>
                         </div>
 
@@ -1340,39 +1383,65 @@
                         </div>
                       </div>
 
-                      {/* CARD 2 */}
+                      {/* CARD 2: Dynamically Rendered Follow-up Established */}
                       <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
                           <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-3">
-                            <span className="text-rose-600">CARD 2</span>
-                            <span className="text-slate-700">Follow-up Established</span>
+                            <span className="text-rose-600 font-bold">CARD 2</span>
+                            <span className="text-slate-700 font-semibold">Follow-up Established</span>
                           </div>
-                          <div className="mt-4 space-y-2 text-xs">
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className="text-rose-600 font-bold">✔</span>
-                              <span>Chest pain:</span>
-                              <span className="font-semibold text-slate-900 ml-auto">Yes</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className="text-rose-600 font-bold">✔</span>
-                              <span>Breathing difficulty:</span>
-                              <span className="font-semibold text-slate-900 ml-auto">Yes</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className="text-rose-600 font-bold">✔</span>
-                              <span>Sudden onset:</span>
-                              <span className="font-semibold text-slate-900 ml-auto">Yes</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-slate-700">
-                              <span className="text-rose-600 font-bold">✔</span>
-                              <span>Pain currently present:</span>
-                              <span className="font-semibold text-slate-900 ml-auto">Yes</span>
-                            </div>
+                          <div className="mt-4 space-y-2.5 text-xs">
+                            {answeredQuestions.length > 0 ? (
+                              answeredQuestions.map((item, idx) => {
+                                const ansLower = (item.answer || "").toLowerCase();
+                                const isYes = ansLower === "yes";
+                                const isNo = ansLower === "no";
+                                const isUnsure = !isYes && !isNo;
+
+                                // Build concise clean label
+                                let label = item.question_text;
+                                if (label.toLowerCase().includes("difficulty breathing")) label = "Breathing difficulty";
+                                else if (label.toLowerCase().includes("spread") || label.toLowerCase().includes("radiation")) label = "Radiation to arm/jaw";
+                                else if (label.toLowerCase().includes("sweat") || label.toLowerCase().includes("nausea")) label = "Cold sweats / shock signs";
+                                else if (label.toLowerCase().includes("sudden")) label = "Sudden acute onset";
+                                else if (label.toLowerCase().includes("neck")) label = "Neck stiffness / meningism";
+                                else if (label.toLowerCase().includes("sepsis") || label.toLowerCase().includes("chill")) label = "Rigors / sepsis signs";
+                                else if (label.length > 32) label = label.slice(0, 30) + "...";
+
+                                return (
+                                  <div key={idx} className="flex items-center justify-between gap-2 text-slate-700 py-1 border-b border-slate-50 last:border-0">
+                                    <div className="flex items-center gap-2 truncate">
+                                      <span className={`font-bold text-xs ${isYes ? "text-emerald-600" : isNo ? "text-rose-600" : "text-amber-500"}`}>
+                                        {isYes ? "✔" : isNo ? "✖" : "?"}
+                                      </span>
+                                      <span className="font-medium truncate" title={item.question_text}>{label}:</span>
+                                    </div>
+                                    <span className={`font-bold px-2.5 py-0.5 rounded-full text-[11px] shrink-0 border ${
+                                      isYes
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : isNo
+                                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                                        : "bg-amber-50 text-amber-700 border-amber-200"
+                                    }`}>
+                                      {item.answer}
+                                    </span>
+                                  </div>
+                                );
+                              })
+                            ) : (
+                              <div className="p-3 bg-slate-50 rounded-2xl text-slate-500 text-xs text-center border border-slate-100">
+                                No follow-up responses recorded yet.
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-[10px] pt-3 border-t border-slate-100">
                           <span className="text-slate-400">Verified via Interactive Prompts</span>
-                          <span className="text-rose-600 font-bold">Critical Indicators</span>
+                          {answeredQuestions.some(a => (a.answer || "").toLowerCase() === "yes") ? (
+                            <span className="text-rose-700 font-bold bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">Critical Indicators</span>
+                          ) : (
+                            <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Negative Findings</span>
+                          )}
                         </div>
                       </div>
 
@@ -1468,71 +1537,111 @@
                       </div>
                     </div>
 
-                    {/* Red Protocol Status Banner (Image 2 with Curvy 3xl) */}
-                    <div className="bg-[#fee2e2] border border-rose-200 rounded-3xl p-7 shadow-sm space-y-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-4">
-                          <div className="w-11 h-11 rounded-2xl bg-[#dc2626] text-white flex items-center justify-center font-bold text-xl shadow-md">
-                            *
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-rose-700 uppercase tracking-wider">
-                              <span className="w-2 h-2 rounded-full bg-rose-600"></span>
-                              PROTOCOL STATUS
-                            </div>
-                            <div className="text-xs font-bold text-rose-900 mt-0.5">● IMMEDIATE</div>
-                            <h3 className="text-lg font-bold text-rose-950 mt-0.5">Human assessment required immediately.</h3>
-                          </div>
-                        </div>
-                        <div className="text-right text-[11px] font-mono text-rose-700">
-                          <div>Timestamp</div>
-                          <div className="font-semibold">14:42:19 EST</div>
-                        </div>
-                      </div>
+                    {/* Protocol Status Banner & Trigger Analysis (Dynamic based on triageNote and user answers) */}
+                    {(() => {
+                      const urgency = (triageNote?.urgency_level || (answeredQuestions.some(a => (a.answer || "").toLowerCase() === "yes") ? "Immediate" : "Standard"));
+                      const isImm = urgency.toLowerCase() === "immediate";
+                      const isUrg = urgency.toLowerCase() === "urgent";
+                      const ruleId = triageNote?.rule_id || (isImm ? "CP-01" : isUrg ? "CP-05" : "CP-02");
+                      const ruleTitle = triageNote?.triggered_rule_title || (isImm ? "Chest pain reported together with breathing difficulty." : isUrg ? "Chest pain present without acute cardiopulmonary collapse." : "Low-risk atypical chest symptoms without acute distress.");
 
-                      <div className="bg-white rounded-2xl p-4 text-xs text-slate-800 leading-relaxed border border-rose-100 shadow-sm">
-                        <div className="font-bold text-slate-900 text-[11px] mb-1">Evaluation Notice</div>
-                        A high-risk presentation was identified by the predefined triage rules. This output is strictly based on rule matching criteria and clinical rule logic—no autonomous medical diagnosis or AI probabilistic percentages are generated.
-                      </div>
-                    </div>
-
-                    {/* Two Column Grid */}
-                    <div className="grid grid-cols-3 gap-6">
-                      {/* Left Column (2 cols) */}
-                      <div className="col-span-2 space-y-5">
-                        
-                        {/* Why? Rule Trigger Analysis Card (Curvy 3xl) */}
-                        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                              <h4 className="text-xs font-bold text-slate-900">Why? Rule Trigger Analysis</h4>
-                              <p className="text-[11px] text-slate-400">Deterministic rule match identified in patient intake questionnaire.</p>
-                            </div>
-                            <span className="px-3 py-1 bg-[#0f2444] text-white text-[11px] font-mono font-bold rounded-full">
-                              Rule CP-01
-                            </span>
-                          </div>
-
-                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
-                            <div className="flex items-center gap-2 text-rose-600 font-semibold text-xs">
-                              <span>!</span>
-                              <span>Rule CP-01 Triggered</span>
-                            </div>
-                            <div className="text-xs font-bold text-slate-900 italic">
-                              &ldquo;Chest pain reported together with breathing difficulty.&rdquo;
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 pt-2 text-xs border-t border-slate-200/60">
-                              <div>
-                                <span className="text-slate-400 block text-[10px]">Trigger Parameter</span>
-                                <span className="font-semibold text-slate-800">Symptom Cluster #4 (Cardiopulmonary)</span>
+                      return (
+                        <>
+                          <div className={`border rounded-3xl p-7 shadow-sm space-y-4 ${
+                            isImm
+                              ? "bg-[#fee2e2] border-rose-200"
+                              : isUrg
+                              ? "bg-[#fef3c7] border-amber-200"
+                              : "bg-[#ecfdf5] border-emerald-200"
+                          }`}>
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-4">
+                                <div className={`w-11 h-11 rounded-2xl text-white flex items-center justify-center font-bold text-xl shadow-md ${
+                                  isImm ? "bg-[#dc2626]" : isUrg ? "bg-amber-600" : "bg-emerald-600"
+                                }`}>
+                                  {isImm ? "!" : isUrg ? "▲" : "✔"}
+                                </div>
+                                <div>
+                                  <div className={`flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider ${
+                                    isImm ? "text-rose-700" : isUrg ? "text-amber-800" : "text-emerald-800"
+                                  }`}>
+                                    <span className={`w-2 h-2 rounded-full ${isImm ? "bg-rose-600" : isUrg ? "bg-amber-500" : "bg-emerald-500"}`}></span>
+                                    PROTOCOL STATUS
+                                  </div>
+                                  <div className={`text-xs font-bold mt-0.5 ${isImm ? "text-rose-900" : isUrg ? "text-amber-900" : "text-emerald-900"}`}>
+                                    ● {urgency.toUpperCase()}
+                                  </div>
+                                  <h3 className={`text-lg font-bold mt-0.5 ${isImm ? "text-rose-950" : isUrg ? "text-amber-950" : "text-emerald-950"}`}>
+                                    {isImm
+                                      ? "Human assessment required immediately."
+                                      : isUrg
+                                      ? "Urgent nursing triage required within 15-30 minutes."
+                                      : "Routine outpatient assessment pathway engaged."}
+                                  </h3>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-slate-400 block text-[10px]">Mandatory Action</span>
-                                <span className="font-semibold text-rose-600">Immediate Clinical Routing</span>
+                              <div className={`text-right text-[11px] font-mono ${isImm ? "text-rose-700" : isUrg ? "text-amber-700" : "text-emerald-700"}`}>
+                                <div>Timestamp</div>
+                                <div className="font-semibold">Just Now • Verified</div>
                               </div>
                             </div>
+
+                            <div className={`bg-white rounded-2xl p-4 text-xs text-slate-800 leading-relaxed shadow-sm border ${
+                              isImm ? "border-rose-100" : isUrg ? "border-amber-100" : "border-emerald-100"
+                            }`}>
+                              <div className="font-bold text-slate-900 text-[11px] mb-1">Evaluation Notice</div>
+                              {isImm
+                                ? "A high-risk presentation was identified by the predefined triage rules. This output is strictly based on rule matching criteria and clinical rule logic—no autonomous medical diagnosis or AI probabilistic percentages are generated."
+                                : isUrg
+                                ? "Urgent presentation identified. Clinical review and monitoring required within 15-30 minutes according to standard protocol."
+                                : "Negative red-flag screening completed. Patient routed to standard ambulatory care pathway without emergency escalation."}
+                            </div>
                           </div>
-                        </div>
+
+                          {/* Two Column Grid */}
+                          <div className="grid grid-cols-3 gap-6">
+                            {/* Left Column (2 cols) */}
+                            <div className="col-span-2 space-y-5">
+                              
+                              {/* Why? Rule Trigger Analysis Card (Curvy 3xl) */}
+                              <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                  <div>
+                                    <h4 className="text-xs font-bold text-slate-900">Why? Rule Trigger Analysis</h4>
+                                    <p className="text-[11px] text-slate-400">Deterministic rule match identified in patient intake questionnaire.</p>
+                                  </div>
+                                  <span className="px-3 py-1 bg-[#0f2444] text-white text-[11px] font-mono font-bold rounded-full">
+                                    Rule {ruleId}
+                                  </span>
+                                </div>
+
+                                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
+                                  <div className={`flex items-center gap-2 font-semibold text-xs ${isImm ? "text-rose-600" : isUrg ? "text-amber-700" : "text-emerald-700"}`}>
+                                    <span>{isImm ? "!" : isUrg ? "▲" : "✔"}</span>
+                                    <span>Rule {ruleId} Triggered</span>
+                                  </div>
+                                  <div className="text-xs font-bold text-slate-900 italic">
+                                    &ldquo;{ruleTitle}&rdquo;
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4 pt-2 text-xs border-t border-slate-200/60">
+                                    <div>
+                                      <span className="text-slate-400 block text-[10px]">Trigger Parameter</span>
+                                      <span className="font-semibold text-slate-800">
+                                        {isImm ? "Symptom Cluster #4 (Cardiopulmonary Distress)" : isUrg ? "Symptom Cluster #2 (Moderate Pain)" : "Symptom Cluster #1 (Atypical Presentation)"}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-slate-400 block text-[10px]">Mandatory Action</span>
+                                      <span className={`font-semibold ${isImm ? "text-rose-600" : isUrg ? "text-amber-700" : "text-emerald-700"}`}>
+                                        {isImm ? "Immediate Clinical Routing" : isUrg ? "Bedside Nurse Check" : "Routine Ambulatory Review"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                        </>
+                      );
+                    })()}
 
                         {/* Evidence & Intake Data Audit Accordion (Curvy 3xl) */}
                         <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
@@ -1551,7 +1660,7 @@
                                 <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">Patient Reported</span>
                               </div>
                               <p className="text-slate-600 text-[11px]">
-                                Severe substernal chest tightness starting 45 minutes prior to intake, accompanied by acute shortness of breath upon mild exertion.
+                                {patientNarrative}
                               </p>
                             </div>
 
@@ -1561,7 +1670,9 @@
                                 <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">Follow-up Established</span>
                               </div>
                               <p className="text-slate-600 text-[11px]">
-                                Confirmed radiation to left arm (Yes). Confirmed prior cardiac history (None reported by patient).
+                                {answeredQuestions.length > 0
+                                  ? answeredQuestions.map(a => `${a.question_text}: ${a.answer}`).join(" | ")
+                                  : "Completed automated symptom triage questions."}
                               </p>
                             </div>
 

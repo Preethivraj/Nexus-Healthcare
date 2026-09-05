@@ -36,6 +36,21 @@ def test_all():
     assert note.rule_id == "CP-01", f"Expected CP-01, got {note.rule_id}"
     assert note.human_review_required is True, "Expected human review required for CP-01"
 
+    print("Testing Negative Clarification (User explicitly answers No to dyspnea)...")
+    no_dyspnea_answers = [
+        FollowUpAnswer(question_id="q_cp_br", question_text="Are you having difficulty breathing right now?", answer="No"),
+        FollowUpAnswer(question_id="q_cp_radiation", question_text="Pain radiating?", answer="No"),
+        FollowUpAnswer(question_id="q_cp_sweat", question_text="Cold sweats?", answer="No")
+    ]
+    no_dyspnea_note = engine.evaluate(
+        narrative="Chest pain started when walking upstairs",
+        extracted_entities={"symptoms": ["Chest Discomfort"]},
+        answers=no_dyspnea_answers,
+        vitals={"spo2": 98}
+    )
+    print(f"[PASS] Non-Immediate Acuity: {no_dyspnea_note.urgency_level} | Rule: {no_dyspnea_note.rule_id}")
+    assert no_dyspnea_note.rule_id != "CP-01", f"Did not expect CP-01 when dyspnea is No, got {no_dyspnea_note.rule_id}"
+
     print("Testing Routine Presentation (FE-04)...")
     routine_note = engine.evaluate(
         narrative="I have had a mild runny nose and low fever for two days.",
