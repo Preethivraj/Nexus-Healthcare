@@ -13,18 +13,21 @@
         extend: {
           colors: {
             appNavy: '#0c2340',
-            appDark: '#081729',
+            appDarkNavy: '#081729',
             activeNav: '#0f2444',
-            lightBg: '#f8fafc',
-            borderLight: '#e2e8f0',
-            textPrimary: '#0f172a',
-            textSecondary: '#64748b',
-            alertRedBg: '#fee2e2',
-            alertRedText: '#b91c1c'
+            lightCanvas: '#f8fafc',
+            borderSubtle: '#e2e8f0',
+            textMain: '#0f172a',
+            textMuted: '#64748b'
           },
           fontFamily: {
             sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
             mono: ['JetBrains Mono', 'Menlo', 'monospace']
+          },
+          borderRadius: {
+            'xl': '0.875rem',
+            '2xl': '1.25rem',
+            '3xl': '1.75rem'
           }
         }
       }
@@ -51,9 +54,14 @@
       -webkit-font-smoothing: antialiased;
     }
     .mono { font-family: 'JetBrains Mono', monospace; }
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; }
+    }
   </style>
 </head>
 <body class="bg-[#f8fafc]">
@@ -62,14 +70,186 @@
   <script type="text/babel">
     const { useState, useEffect, useMemo } = React;
 
+    // Rich pre-seeded active queue demo data
+    const DEMO_SESSIONS = [
+      {
+        id: "P-1042",
+        patient_name: "Sunita Patel",
+        gender: "Female",
+        age: 58,
+        primary_complaint: "Chest pain radiating to left arm",
+        urgency: "Immediate",
+        current_status: "Human Review",
+        waiting_time: "04:12",
+        assigned_department: "Cardiology",
+        action_type: "Review"
+      },
+      {
+        id: "P-1043",
+        patient_name: "Aarav Mehta",
+        gender: "Male",
+        age: 34,
+        primary_complaint: "Fever & Cough Duration: 3 days",
+        urgency: "Routine",
+        current_status: "Automated Monitoring",
+        waiting_time: "12:45",
+        assigned_department: "General Medicine",
+        action_type: "Details"
+      },
+      {
+        id: "P-1044",
+        patient_name: "Priya Sharma",
+        gender: "Female",
+        age: 22,
+        primary_complaint: "Acute Injury Laceration on right forearm",
+        urgency: "Urgent",
+        current_status: "Assessment Required",
+        waiting_time: "08:20",
+        assigned_department: "Orthopedics / Urgent Care",
+        action_type: "Assess"
+      },
+      {
+        id: "P-1045",
+        patient_name: "Vikram Malhotra",
+        gender: "Male",
+        age: 45,
+        primary_complaint: "Mild Dizziness Postural vertigo symptoms",
+        urgency: "Routine",
+        current_status: "Awaiting Nurse Check",
+        waiting_time: "03:10",
+        assigned_department: "Neurology",
+        action_type: "Details"
+      },
+      {
+        id: "P-1046",
+        patient_name: "Kavita Krishnan",
+        gender: "Female",
+        age: 62,
+        primary_complaint: "Severe Dyspnea SpO2 89% with cyanosis",
+        urgency: "Immediate",
+        current_status: "Escalated to ICU Lead",
+        waiting_time: "01:30",
+        assigned_department: "Respiratory Resuscitation",
+        action_type: "Review"
+      },
+      {
+        id: "P-1047",
+        patient_name: "Devendra Joshi",
+        gender: "Male",
+        age: 29,
+        primary_complaint: "Acute Right Lower Quadrant Pain with low fever",
+        urgency: "Urgent",
+        current_status: "Surgical Assessment",
+        waiting_time: "15:10",
+        assigned_department: "Acute Surgery Ward",
+        action_type: "Assess"
+      },
+      {
+        id: "P-1048",
+        patient_name: "Baby Sneha Reddy",
+        gender: "Female",
+        age: 4,
+        primary_complaint: "High Fever (39.8°C) in child with extreme chills",
+        urgency: "Urgent",
+        current_status: "Pediatric Triage",
+        waiting_time: "06:40",
+        assigned_department: "Pediatric Emergency Ward",
+        action_type: "Assess"
+      },
+      {
+        id: "P-1049",
+        patient_name: "Rohan Mukherjee",
+        gender: "Male",
+        age: 38,
+        primary_complaint: "Twisted right ankle while jogging, mild swelling",
+        urgency: "Routine",
+        current_status: "Ambulatory Waiting",
+        waiting_time: "22:15",
+        assigned_department: "Urgent Care Minor Injury Clinic",
+        action_type: "Details"
+      },
+      {
+        id: "P-1050",
+        patient_name: "Meera Pillai",
+        gender: "Female",
+        age: 71,
+        primary_complaint: "Crushing central chest heaviness with profuse sweating",
+        urgency: "Immediate",
+        current_status: "Resuscitation Bay Allocated",
+        waiting_time: "02:05",
+        assigned_department: "Emergency Resuscitation Bay",
+        action_type: "Review"
+      },
+      {
+        id: "P-1051",
+        patient_name: "Amit Kapoor",
+        gender: "Male",
+        age: 50,
+        primary_complaint: "Mild diffuse crampy abdominal ache after meals",
+        urgency: "Routine",
+        current_status: "Pending Consultation",
+        waiting_time: "28:50",
+        assigned_department: "Gastroenterology Clinic",
+        action_type: "Details"
+      },
+      {
+        id: "P-1052",
+        patient_name: "Deepa Chandran",
+        gender: "Female",
+        age: 42,
+        primary_complaint: "Sharp left-sided chest pain on deep inspiration",
+        urgency: "Urgent",
+        current_status: "Chest X-Ray Ordered",
+        waiting_time: "14:20",
+        assigned_department: "Emergency Observation Unit",
+        action_type: "Assess"
+      },
+      {
+        id: "P-1053",
+        patient_name: "Karthik Swaminathan",
+        gender: "Male",
+        age: 26,
+        primary_complaint: "Superficial glass cut on left palm, bleeding stopped",
+        urgency: "Routine",
+        current_status: "Wound Care Line",
+        waiting_time: "18:30",
+        assigned_department: "Emergency Fast Track Room",
+        action_type: "Details"
+      },
+      {
+        id: "P-1054",
+        patient_name: "Lakshmi Raman",
+        gender: "Female",
+        age: 67,
+        primary_complaint: "Sudden severe back and abdominal tearing pain",
+        urgency: "Immediate",
+        current_status: "Vascular Alert Active",
+        waiting_time: "01:10",
+        assigned_department: "Vascular Emergency Bay",
+        action_type: "Review"
+      },
+      {
+        id: "P-1055",
+        patient_name: "Suresh Nair",
+        gender: "Male",
+        age: 55,
+        primary_complaint: "Acute asthma exacerbation with audible expiratory wheeze",
+        urgency: "Urgent",
+        current_status: "Nebulization Underway",
+        waiting_time: "09:45",
+        assigned_department: "Acute Respiratory Day Care",
+        action_type: "Assess"
+      }
+    ];
+
     function App() {
-      // Main navigation view: 'dashboard', 'workflow', 'rules', 'history', 'escalations', 'note'
-      const [currentView, setCurrentView] = useState("dashboard");
+      // Current active view
+      const [currentView, setCurrentView] = useState("dashboard"); // 'dashboard', 'workflow', 'rules', 'history', 'escalations', 'analytics', 'note'
       
       // 4-Step Clinical Triage Workflow: 1 (Understand), 2 (Clarify), 3 (Synthesis), 4 (Evaluate)
       const [workflowStep, setWorkflowStep] = useState(1);
 
-      // Data states
+      // Telemetry state
       const [stats, setStats] = useState({
         active_assessments: 14,
         awaiting_human_review: 3,
@@ -77,7 +257,7 @@
         average_intake_time: "2.4m",
         intake_time_delta: "-0.3m"
       });
-      const [activeSessions, setActiveSessions] = useState([]);
+      const [activeSessions, setActiveSessions] = useState(DEMO_SESSIONS);
       const [urgencyFilter, setUrgencyFilter] = useState("All Urgency Levels");
       const [searchQuery, setSearchQuery] = useState("");
       const [rules, setRules] = useState([]);
@@ -106,11 +286,15 @@
       // Modals
       const [showQuickTriage, setShowQuickTriage] = useState(false);
       const [showEscalatedModal, setShowEscalatedModal] = useState(false);
+      const [showSimModal, setShowSimModal] = useState(false);
+      const [simData, setSimData] = useState(null);
 
-      // Load initial backend data
+      // Initial data load
       useEffect(() => {
         fetch("/api/stats").then(r => r.ok ? r.json() : null).then(d => d && setStats(d)).catch(() => {});
-        fetch("/api/active-sessions").then(r => r.ok ? r.json() : null).then(d => d && setActiveSessions(d)).catch(() => {});
+        fetch("/api/active-sessions").then(r => r.ok ? r.json() : null).then(d => {
+          if (d && d.length > 0) setActiveSessions(d);
+        }).catch(() => {});
         fetch("/api/rules").then(r => r.ok ? r.json() : null).then(d => {
           if (d && d.length > 0) {
             setRules(d);
@@ -190,7 +374,7 @@
         }
       };
 
-      // Filtered sessions
+      // Filtered queue
       const filteredSessions = useMemo(() => {
         return activeSessions.filter(s => {
           const matchesUrgency = (urgencyFilter === "All Urgency Levels" || urgencyFilter === "All") ? true : s.urgency.toLowerCase() === urgencyFilter.toLowerCase();
@@ -214,26 +398,25 @@
       return (
         <div className="flex h-screen overflow-hidden bg-[#f8fafc]">
           
-          {/* ===================== SIDEBAR (WHITE BACKGROUND - EXACT TO MOCKUPS) ===================== */}
-          <aside className="w-56 bg-white text-slate-700 flex flex-col justify-between flex-shrink-0 z-20 border-r border-[#e2e8f0] select-none">
+          {/* ===================== SIDEBAR (WHITE + CURVY PILLS) ===================== */}
+          <aside className="w-60 bg-white text-slate-700 flex flex-col justify-between flex-shrink-0 z-20 border-r border-[#e2e8f0] select-none">
             <div>
               {/* Brand Header */}
               <div className="p-5 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#0b1b30] flex items-center justify-center text-white font-bold text-sm tracking-wide shadow-sm">
+                <div className="w-9 h-9 rounded-2xl bg-[#0c2340] flex items-center justify-center text-white font-bold text-sm tracking-wide shadow-sm">
                   Ai
                 </div>
                 <div>
-                  <h1 className="text-slate-900 font-bold text-sm leading-tight">TriageAI</h1>
+                  <h1 className="text-slate-900 font-bold text-sm leading-tight tracking-tight">TriageAI</h1>
                   <p className="text-[11px] text-slate-400 font-normal">Clinical Core v2.4</p>
                 </div>
               </div>
 
-              {/* Navigation Menu (White with Dark Navy Active Pill) */}
+              {/* Navigation Menu with Curvy Pills */}
               <nav className="px-3 space-y-1 mt-1">
-                {/* Dashboard Button */}
                 <button
                   onClick={() => setCurrentView("dashboard")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "dashboard"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -243,13 +426,12 @@
                   <span>Dashboard</span>
                 </button>
 
-                {/* New Assessment Button */}
                 <button
                   onClick={() => {
                     setWorkflowStep(1);
                     setCurrentView("workflow");
                   }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "workflow"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -259,10 +441,9 @@
                   <span>New Assessment</span>
                 </button>
 
-                {/* Active Assessments */}
                 <button
                   onClick={() => setCurrentView("active-assessments")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "active-assessments"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -270,12 +451,12 @@
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                   <span>Active Assessments</span>
+                  <span className="ml-auto text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-mono font-bold text-slate-500">14</span>
                 </button>
 
-                {/* Triage History */}
                 <button
                   onClick={() => setCurrentView("history")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "history"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -285,10 +466,9 @@
                   <span>Triage History</span>
                 </button>
 
-                {/* Rules */}
                 <button
                   onClick={() => setCurrentView("rules")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "rules"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -296,12 +476,12 @@
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                   <span>Rules</span>
+                  <span className="ml-auto text-[10px] bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full font-mono font-bold border border-sky-100">24</span>
                 </button>
 
-                {/* Escalations */}
                 <button
                   onClick={() => setCurrentView("escalations")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "escalations"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -309,12 +489,12 @@
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                   <span>Escalations</span>
+                  <span className="ml-auto text-[10px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded-full font-mono font-bold border border-rose-200">5</span>
                 </button>
 
-                {/* Analytics */}
                 <button
                   onClick={() => setCurrentView("analytics")}
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold transition-all ${
                     currentView === "analytics"
                       ? "bg-[#0f2444] text-white shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
@@ -324,10 +504,9 @@
                   <span>Analytics</span>
                 </button>
 
-                {/* Settings */}
                 <button
-                  onClick={() => alert("Settings locked under Governance Revision 4.2.")}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  onClick={() => alert("System settings configured according to AIIEM Clinical Protocol Board v4.2.")}
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span>Settings</span>
@@ -335,14 +514,14 @@
               </nav>
             </div>
 
-            {/* Sidebar Bottom Profile (Exact Light Card) */}
+            {/* Sidebar Bottom Profile (Curvy Pill) */}
             <div className="p-3 space-y-2 border-t border-[#e2e8f0]">
               <div className="flex items-center gap-2 text-xs text-slate-500 px-2 py-1 cursor-pointer hover:text-slate-800">
                 <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4m0-4h.01" /></svg>
                 <span>Help & Safety</span>
               </div>
-              <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#f1f5f9] text-slate-900">
-                <div className="w-8 h-8 rounded-full bg-[#0f2444] flex items-center justify-center text-white text-xs font-semibold">
+              <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-[#f1f5f9] text-slate-900 shadow-sm border border-slate-200/60">
+                <div className="w-9 h-9 rounded-full bg-[#0f2444] flex items-center justify-center text-white text-xs font-semibold shadow-inner">
                   SC
                 </div>
                 <div className="overflow-hidden">
@@ -353,14 +532,14 @@
             </div>
           </aside>
 
-          {/* ===================== MAIN CONTENT CANVAS ===================== */}
+          {/* ===================== MAIN CANVAS ===================== */}
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
             
-            {/* Top Bar (Exact to Mockups) */}
-            <header className="sticky top-0 z-10 bg-white border-b border-[#e2e8f0] px-8 py-3 flex items-center justify-between">
+            {/* Top Bar with Curvy Search and Quick Triage */}
+            <header className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-[#e2e8f0] px-8 py-3.5 flex items-center justify-between shadow-sm">
               <div className="w-96">
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   </span>
                   <input
@@ -368,7 +547,7 @@
                     placeholder="Search patient ID, acuity, or symptoms..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-1.5 text-xs bg-[#f8fafc] border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white text-slate-700 placeholder:text-slate-400"
+                    className="w-full pl-10 pr-4 py-2 text-xs bg-[#f8fafc] border border-slate-200 rounded-full focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white text-slate-700 placeholder:text-slate-400 transition-all"
                   />
                 </div>
               </div>
@@ -376,25 +555,25 @@
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setShowQuickTriage(true)}
-                  className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5"
+                  className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm flex items-center gap-1.5 transition-all"
                 >
                   <span>+ Quick Triage</span>
                 </button>
-                <div className="relative p-1 text-slate-400 hover:text-slate-700 cursor-pointer">
+                <div className="relative p-2 text-slate-400 hover:text-slate-700 cursor-pointer">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
                 </div>
               </div>
             </header>
 
-            {/* ===================== DASHBOARD VIEW (IMAGE 5 IN USER UPLOAD) ===================== */}
+            {/* ===================== DASHBOARD VIEW (IMAGE 5) ===================== */}
             {currentView === "dashboard" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
                 
                 {/* Greeting & Action Header */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold text-slate-900 tracking-tight">Good morning, Sarah</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Good morning, Sarah</h2>
                     <p className="text-xs text-slate-500 mt-0.5">Let's make every patient intake safer and clearer.</p>
                   </div>
                   <button
@@ -402,71 +581,73 @@
                       setWorkflowStep(1);
                       setCurrentView("workflow");
                     }}
-                    className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-2 rounded-xl shadow-sm"
+                    className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-5 py-2.5 rounded-full shadow-sm transition-all"
                   >
                     + New Patient Assessment
                   </button>
                 </div>
 
-                {/* 4 Metric Cards (Image 5) */}
+                {/* 4 Metric Cards with Soft Curvy Edges */}
                 <div className="grid grid-cols-4 gap-4">
                   {/* Card 1 */}
-                  <div className="bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm flex justify-between items-start">
+                  <div className="bg-white p-5 rounded-3xl border border-[#e2e8f0] shadow-sm flex justify-between items-start transition-all hover:shadow-md">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-500">Active Assessments</div>
-                      <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.active_assessments}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{stats.active_assessments}</div>
                       <div className="text-[11px] font-medium text-sky-600 mt-1">↑+2% from hr</div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-[#0f2444] text-white flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /></svg>
+                    <div className="w-10 h-10 rounded-2xl bg-[#0f2444] text-white flex items-center justify-center shadow-md">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /></svg>
                     </div>
                   </div>
 
                   {/* Card 2 */}
-                  <div className="bg-[#fef2f2] p-4 rounded-2xl border border-rose-100 shadow-sm flex justify-between items-start">
+                  <div className="bg-[#fef2f2] p-5 rounded-3xl border border-rose-100 shadow-sm flex justify-between items-start transition-all hover:shadow-md">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-600">Awaiting Human Review</div>
-                      <div className="text-xl font-bold text-rose-600 mt-2 font-mono">{stats.awaiting_human_review}</div>
-                      <div className="text-[11px] font-semibold text-rose-500 mt-1">Requires attention</div>
+                      <div className="text-2xl font-bold text-rose-600 mt-2 font-mono">{stats.awaiting_human_review}</div>
+                      <div className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Requires attention
+                      </div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">
                       ▲
                     </div>
                   </div>
 
                   {/* Card 3 */}
-                  <div className="bg-[#f0f9ff] p-4 rounded-2xl border border-sky-100 shadow-sm flex justify-between items-start">
+                  <div className="bg-[#f0f9ff] p-5 rounded-3xl border border-sky-100 shadow-sm flex justify-between items-start transition-all hover:shadow-md">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-600">Escalated Today</div>
-                      <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.escalated_today}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{stats.escalated_today}</div>
                       <div className="text-[11px] font-medium text-slate-500 mt-1">Stable flow</div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-base">
                       !
                     </div>
                   </div>
 
                   {/* Card 4 */}
-                  <div className="bg-white p-4 rounded-2xl border border-[#e2e8f0] shadow-sm flex justify-between items-start">
+                  <div className="bg-white p-5 rounded-3xl border border-[#e2e8f0] shadow-sm flex justify-between items-start transition-all hover:shadow-md">
                     <div>
                       <div className="text-[11px] font-semibold text-slate-500">Average Intake Time</div>
-                      <div className="text-xl font-bold text-slate-900 mt-2 font-mono">{stats.average_intake_time}</div>
-                      <div className="text-[11px] font-medium text-slate-500 mt-1">↓ {stats.intake_time_delta}</div>
+                      <div className="text-2xl font-bold text-slate-900 mt-2 font-mono">{stats.average_intake_time}</div>
+                      <div className="text-[11px] font-medium text-emerald-600 mt-1">↓ {stats.intake_time_delta}</div>
                     </div>
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+                    <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
                     </div>
                   </div>
                 </div>
 
-                {/* Active Assessments Table (Image 5) */}
-                <div className="bg-white rounded-2xl border border-[#e2e8f0] shadow-sm overflow-hidden">
-                  <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                {/* Active Assessments Table (Curvy 3xl) */}
+                <div className="bg-white rounded-3xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">Active Assessments</h3>
-                      <p className="text-[11px] text-slate-400">Real-time clinical triage stream and queue management.</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">Real-time clinical triage stream and queue management.</p>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg px-2.5 py-1 bg-slate-50">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-600 border border-slate-200 rounded-full px-3 py-1 bg-slate-50 font-medium">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M6 10h12M9 16h6" /></svg>
                       <span>All Urgency Levels</span>
                     </div>
@@ -475,13 +656,13 @@
                   <table className="w-full text-left text-xs">
                     <thead className="bg-[#f8fafc] text-slate-500 font-semibold border-b border-slate-100">
                       <tr>
-                        <th className="py-3 px-4">Patient / Session ID</th>
-                        <th className="py-3 px-4">Primary Complaint</th>
-                        <th className="py-3 px-4">Urgency</th>
-                        <th className="py-3 px-4">Current Status</th>
-                        <th className="py-3 px-4">Waiting Time</th>
-                        <th className="py-3 px-4">Assigned Department</th>
-                        <th className="py-3 px-4 text-right">Action</th>
+                        <th className="py-3.5 px-5">Patient / Session ID</th>
+                        <th className="py-3.5 px-5">Primary Complaint</th>
+                        <th className="py-3.5 px-5">Urgency</th>
+                        <th className="py-3.5 px-5">Current Status</th>
+                        <th className="py-3.5 px-5">Waiting Time</th>
+                        <th className="py-3.5 px-5">Assigned Department</th>
+                        <th className="py-3.5 px-5 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -490,9 +671,9 @@
                         const isUrg = row.urgency.toLowerCase() === "urgent";
                         return (
                           <tr key={row.id} className="hover:bg-slate-50/80 transition-colors">
-                            <td className="py-3.5 px-4">
+                            <td className="py-3.5 px-5">
                               <div className="flex items-center gap-2.5">
-                                <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[11px] ${
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] ${
                                   isImm ? "bg-rose-100 text-rose-700" : isUrg ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800"
                                 }`}>
                                   {row.id.split("-")[1]?.slice(0, 2) || "P1"}
@@ -503,33 +684,33 @@
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3.5 px-4 font-medium text-slate-800 max-w-xs truncate">
+                            <td className="py-3.5 px-5 font-medium text-slate-800 max-w-xs truncate">
                               {row.primary_complaint}
                             </td>
-                            <td className="py-3.5 px-4">
-                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-                                isImm ? "bg-rose-50 text-rose-700" : isUrg ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"
+                            <td className="py-3.5 px-5">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold ${
+                                isImm ? "bg-rose-50 text-rose-700 border border-rose-200" : isUrg ? "bg-amber-50 text-amber-700 border border-amber-200" : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                               }`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${isImm ? "bg-rose-600" : isUrg ? "bg-amber-500" : "bg-emerald-500"}`}></span>
                                 {row.urgency}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 text-slate-700">{row.current_status}</td>
-                            <td className={`py-3.5 px-4 font-mono font-semibold ${isImm ? "text-rose-600" : isUrg ? "text-amber-600" : "text-slate-600"}`}>
+                            <td className="py-3.5 px-5 text-slate-700 font-medium">{row.current_status}</td>
+                            <td className={`py-3.5 px-5 font-mono font-semibold ${isImm ? "text-rose-600" : isUrg ? "text-amber-600" : "text-slate-600"}`}>
                               {row.waiting_time}
                             </td>
-                            <td className="py-3.5 px-4 text-slate-700">{row.assigned_department}</td>
-                            <td className="py-3.5 px-4 text-right">
+                            <td className="py-3.5 px-5 text-slate-700">{row.assigned_department}</td>
+                            <td className="py-3.5 px-5 text-right">
                               <button
                                 onClick={() => {
                                   setPatientNarrative(row.primary_complaint);
                                   setWorkflowStep(1);
                                   setCurrentView("workflow");
                                 }}
-                                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                                className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all ${
                                   row.action_type === "Review" || row.action_type === "Assess"
-                                    ? "bg-[#0f2444] text-white hover:bg-slate-800"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                    ? "bg-[#0f2444] text-white hover:bg-slate-800 shadow-sm"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/80"
                                 }`}
                               >
                                 {row.action_type || "Details"}
@@ -541,13 +722,13 @@
                     </tbody>
                   </table>
 
-                  <div className="p-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                    <div>Showing 4 of 14 active patient sessions</div>
-                    <div className="flex gap-1">
-                      <button className="px-2 py-0.5 border border-slate-200 rounded">Previous</button>
-                      <button className="px-2 py-0.5 bg-[#0f2444] text-white font-semibold rounded">1</button>
-                      <button className="px-2 py-0.5 border border-slate-200 rounded">2</button>
-                      <button className="px-2 py-0.5 border border-slate-200 rounded">Next</button>
+                  <div className="p-4 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <div>Showing 14 active patient intake sessions</div>
+                    <div className="flex gap-1.5">
+                      <button className="px-3 py-1 border border-slate-200 rounded-full hover:bg-slate-50">Previous</button>
+                      <button className="px-3 py-1 bg-[#0f2444] text-white font-semibold rounded-full shadow-sm">1</button>
+                      <button className="px-3 py-1 border border-slate-200 rounded-full hover:bg-slate-50">2</button>
+                      <button className="px-3 py-1 border border-slate-200 rounded-full hover:bg-slate-50">Next</button>
                     </div>
                   </div>
                 </div>
@@ -559,7 +740,7 @@
             {currentView === "workflow" && (
               <main className="p-8 max-w-5xl mx-auto w-full space-y-6">
                 
-                {/* Workflow Header & Step Breadcrumb (Exact to Image 4) */}
+                {/* Workflow Header & Step Breadcrumb (Curvy Pill) */}
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-[10px] font-bold text-sky-600 uppercase tracking-wider">Clinical Triage Workflow</div>
@@ -567,29 +748,29 @@
                   </div>
 
                   {/* 4-Step Pill on Right (Image 4) */}
-                  <div className="flex items-center gap-2 text-xs bg-slate-100 p-1 rounded-xl">
-                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 1 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
+                  <div className="flex items-center gap-1.5 text-xs bg-slate-100 p-1 rounded-full border border-slate-200/60">
+                    <span className={`px-4 py-1.5 rounded-full font-bold transition-all ${workflowStep === 1 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       1 Understand
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 2 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-4 py-1.5 rounded-full font-bold transition-all ${workflowStep === 2 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       2 Clarify
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 3 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-4 py-1.5 rounded-full font-bold transition-all ${workflowStep === 3 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       3 Evaluate
                     </span>
-                    <span className={`px-3 py-1 rounded-lg font-bold transition-all ${workflowStep === 4 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
+                    <span className={`px-4 py-1.5 rounded-full font-bold transition-all ${workflowStep === 4 ? "bg-[#0f2444] text-white shadow-sm" : "text-slate-500"}`}>
                       4 Triage Note
                     </span>
                   </div>
                 </div>
 
-                {/* --- STEP 1: UNDERSTAND (IMAGE 4 EXACT) --- */}
+                {/* --- STEP 1: UNDERSTAND (IMAGE 4) --- */}
                 {workflowStep === 1 && (
                   <div className="grid grid-cols-3 gap-6">
-                    {/* Left Form (2 cols) */}
-                    <div className="col-span-2 bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-sm space-y-5">
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center font-bold">
+                    {/* Left Form (2 cols, Curvy 3xl) */}
+                    <div className="col-span-2 bg-white rounded-3xl border border-[#e2e8f0] p-7 shadow-sm space-y-6">
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-9 h-9 rounded-2xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-sm shadow-sm">
                           💬
                         </div>
                         <div>
@@ -605,23 +786,23 @@
                           rows={6}
                           value={patientNarrative}
                           onChange={(e) => setPatientNarrative(e.target.value)}
-                          className="w-full p-4 text-xs bg-[#f8fafc] border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-sky-500 focus:bg-white text-slate-800 leading-relaxed font-sans"
+                          className="w-full p-4 text-xs bg-[#f8fafc] border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500 focus:bg-white text-slate-800 leading-relaxed font-sans transition-all"
                         />
                         <button
                           type="button"
                           onClick={toggleVoice}
-                          className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm"
+                          className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 shadow-sm transition-all"
                         >
                           <span>🎙</span>
                           <span>{isRecording ? "Listening..." : "Voice Dictation"}</span>
                         </button>
                       </div>
 
-                      {/* Common Symptoms Chips */}
+                      {/* Common Symptoms Chips (Curvy Pills) */}
                       <div>
                         <div className="text-[11px] text-slate-500 mb-2 font-medium">Common Symptoms (Click to add):</div>
                         <div className="flex flex-wrap gap-2">
-                          {["+ Chest Pain", "+ Shortness of Breath", "+ Dizziness", "+ Nausea"].map(chip => (
+                          {["+ Chest Pain", "+ Shortness of Breath", "+ Dizziness", "+ Nausea", "+ High Fever", "+ Sharp Abdominal Pain"].map(chip => (
                             <button
                               key={chip}
                               type="button"
@@ -630,7 +811,7 @@
                                   setPatientNarrative(prev => `${prev} ${chip.replace("+ ", "")}`);
                                 }
                               }}
-                              className="text-xs font-semibold bg-sky-50 text-sky-700 px-3 py-1 rounded-lg border border-sky-100 hover:bg-sky-100 transition-all"
+                              className="text-xs font-semibold bg-sky-50 text-sky-700 px-3.5 py-1.5 rounded-full border border-sky-100 hover:bg-sky-100 transition-all"
                             >
                               {chip}
                             </button>
@@ -647,7 +828,7 @@
                         <button
                           type="button"
                           onClick={handleStartAssessment}
-                          className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-5 py-2 rounded-lg shadow-sm flex items-center gap-1.5"
+                          className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-6 py-2.5 rounded-full shadow-sm flex items-center gap-1.5 transition-all"
                         >
                           <span>Start Assessment</span>
                           <span>→</span>
@@ -655,15 +836,15 @@
                       </div>
                     </div>
 
-                    {/* Right Column: Metadata & Clinical AI Tip (Image 4) */}
+                    {/* Right Column: Metadata & Clinical AI Tip (Curvy 3xl) */}
                     <div className="space-y-4">
-                      <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Session Metadata</span>
-                          <span className="text-[10px] font-semibold bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full border border-sky-200">New Intake</span>
+                          <span className="text-[10px] font-semibold bg-sky-50 text-sky-700 px-3 py-0.5 rounded-full border border-sky-200">New Intake</span>
                         </div>
 
-                        <div className="space-y-2 text-xs">
+                        <div className="space-y-3 text-xs">
                           <div>
                             <span className="text-slate-400 block text-[10px]">Intake Channel</span>
                             <span className="font-semibold text-slate-800">Emergency Walk-in</span>
@@ -679,8 +860,8 @@
                         </div>
                       </div>
 
-                      {/* Clinical AI Tip (Dark Navy Card) */}
-                      <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-2">
+                      {/* Clinical AI Tip (Dark Navy Card, Curvy 3xl) */}
+                      <div className="bg-[#0c2340] text-white rounded-3xl p-6 shadow-md space-y-2.5">
                         <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold">
                           <span>💡</span>
                           <span>Clinical AI Tip</span>
@@ -693,11 +874,11 @@
                   </div>
                 )}
 
-                {/* --- STEP 2: CLARIFY (IMAGE 3 EXACT) --- */}
+                {/* --- STEP 2: CLARIFY (IMAGE 3) --- */}
                 {workflowStep === 2 && (
                   <div className="grid grid-cols-3 gap-6">
-                    {/* Left Chat Stream (2 cols) */}
-                    <div className="col-span-2 bg-white rounded-2xl border border-[#e2e8f0] p-6 shadow-sm space-y-5">
+                    {/* Left Chat Stream (2 cols, Curvy 3xl) */}
+                    <div className="col-span-2 bg-white rounded-3xl border border-[#e2e8f0] p-7 shadow-sm space-y-5">
                       <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
                         <div>
                           <div className="flex items-center gap-2 text-[10px] font-bold text-sky-600 uppercase tracking-wider">
@@ -707,13 +888,13 @@
                           <h3 className="text-sm font-bold text-slate-900 mt-0.5">Active Triage Session</h3>
                           <p className="text-[11px] text-slate-400">Automated clinical interview protocol engaged. Please review responses or prompt manual override.</p>
                         </div>
-                        <span className="font-mono text-[10px] text-slate-400 font-semibold bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                        <span className="font-mono text-[10px] text-slate-400 font-semibold bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200">
                           ID: {sessionId}
                         </span>
                       </div>
 
                       {/* Patient Chat Bubble */}
-                      <div className="bg-[#0c2340] text-white rounded-xl p-4 shadow-sm">
+                      <div className="bg-[#0c2340] text-white rounded-2xl p-4 shadow-sm">
                         <div className="text-[10px] text-slate-400 mb-1">Patient • 10:42 AM</div>
                         <p className="text-xs text-slate-100 leading-relaxed">
                           {patientNarrative}
@@ -721,53 +902,53 @@
                       </div>
 
                       {/* System Response 1 (Answered) */}
-                      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-2">
+                      <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2">
                         <div className="text-[10px] text-slate-400">TriageAI • 10:42 AM</div>
                         <div className="text-xs font-semibold text-slate-800">Are you having difficulty breathing right now?</div>
-                        <div className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded bg-sky-100 text-sky-800">
+                        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-sky-100 text-sky-800 border border-sky-200">
                           <span>✔</span>
                           <span>Answered: Yes</span>
                         </div>
                       </div>
 
-                      {/* System Response 2 (Active Question with 3 Buttons) */}
-                      <div className="bg-slate-50 rounded-xl p-5 border border-slate-200/80 space-y-4">
+                      {/* System Response 2 (Active Question with 3 Curvy Buttons) */}
+                      <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-4">
                         <div className="text-[10px] text-slate-400">TriageAI • 10:43 AM</div>
                         <div className="text-sm font-bold text-slate-900">
                           {questions[currentQuestionIdx] ? questions[currentQuestionIdx].text : "Did the chest pain begin suddenly?"}
                         </div>
 
-                        {/* 3 Choice Buttons */}
+                        {/* 3 Curvy Buttons */}
                         <div className="grid grid-cols-3 gap-3">
                           <button
                             type="button"
                             onClick={() => handleAnswer("Yes")}
-                            className="bg-white hover:bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
+                            className="bg-white hover:bg-emerald-50 hover:border-emerald-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
                           >
-                            <span>✔</span>
+                            <span className="text-emerald-600">✔</span>
                             <span>Yes</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleAnswer("No")}
-                            className="bg-white hover:bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
+                            className="bg-white hover:bg-rose-50 hover:border-rose-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
                           >
-                            <span>✖</span>
+                            <span className="text-rose-600">✖</span>
                             <span>No</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => handleAnswer("I'm not sure")}
-                            className="bg-white hover:bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
+                            className="bg-white hover:bg-amber-50 hover:border-amber-500 border border-slate-200 rounded-2xl p-3.5 flex items-center justify-center gap-2 text-xs font-semibold text-slate-800 shadow-sm transition-all"
                           >
-                            <span>?</span>
+                            <span className="text-amber-600">?</span>
                             <span>I'm not sure</span>
                           </button>
                         </div>
                       </div>
 
                       {/* Progress Bar & Why asking Accordion */}
-                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-xs font-semibold text-slate-800">
                             <span>✔</span>
@@ -776,7 +957,7 @@
                               <div className="text-[10px] text-slate-400 font-normal">Acuity determination remaining</div>
                             </div>
                           </div>
-                          <div className="w-32 bg-slate-200 rounded-full h-2">
+                          <div className="w-36 bg-slate-200 rounded-full h-2">
                             <div className="bg-sky-600 h-2 rounded-full" style={{ width: "50%" }}></div>
                           </div>
                         </div>
@@ -790,7 +971,7 @@
                             <span>{whyAskingOpen ? "▲" : "▼"}</span>
                           </button>
                           {whyAskingOpen && (
-                            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed bg-white p-2.5 rounded border border-slate-200">
+                            <p className="text-[11px] text-slate-500 mt-2 leading-relaxed bg-white p-3 rounded-2xl border border-slate-200">
                               Checks for hyper-acute onset and anginal progression to determine resuscitation vs. observation pathway.
                             </p>
                           )}
@@ -800,26 +981,26 @@
 
                     {/* Right Column: Metadata & NLP Core (Image 3) */}
                     <div className="space-y-4">
-                      <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-3">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                           <span className="text-xs font-bold text-slate-700">Session Metadata</span>
-                          <span className="text-[10px] font-semibold bg-sky-50 text-sky-700 px-2 py-0.5 rounded-full border border-sky-200">Secure Session</span>
+                          <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-3 py-0.5 rounded-full border border-emerald-200">Secure Session</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <div className="grid grid-cols-2 gap-2.5 text-xs">
+                          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span className="text-slate-400 block text-[10px]">Patient Vitals</span>
                             <span className="font-semibold text-slate-800">Linked (SpO2 96%)</span>
                           </div>
-                          <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span className="text-slate-400 block text-[10px]">Protocol</span>
                             <span className="font-semibold text-slate-800">{protocolName}</span>
                           </div>
-                          <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span className="text-slate-400 block text-[10px]">Language</span>
                             <span className="font-semibold text-slate-800">English (US)</span>
                           </div>
-                          <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                             <span className="text-slate-400 block text-[10px]">Confidence Score</span>
                             <span className="font-semibold text-sky-600">{confidenceScore}</span>
                           </div>
@@ -827,17 +1008,17 @@
 
                         {/* Extracted Symptoms */}
                         <div className="pt-2 border-t border-slate-100">
-                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Extracted Symptoms</span>
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">Extracted Symptoms</span>
                           <div className="flex flex-wrap gap-1.5">
-                            <span className="text-xs bg-[#0c2340] text-white px-2.5 py-0.5 rounded-md font-medium">Chest Pain (Acute)</span>
-                            <span className="text-xs bg-[#0c2340] text-white px-2.5 py-0.5 rounded-md font-medium">Shortness of Breath</span>
-                            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-medium">+ Onset: Morning</span>
+                            <span className="text-xs bg-[#0c2340] text-white px-3 py-1 rounded-full font-medium">Chest Pain (Acute)</span>
+                            <span className="text-xs bg-[#0c2340] text-white px-3 py-1 rounded-full font-medium">Shortness of Breath</span>
+                            <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-medium border border-slate-200">+ Onset: Morning</span>
                           </div>
                         </div>
                       </div>
 
-                      {/* Clinical AI Core (Dark Navy Card) */}
-                      <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-2">
+                      {/* Clinical AI Core (Dark Navy Card, Curvy 3xl) */}
+                      <div className="bg-[#0c2340] text-white rounded-3xl p-6 shadow-md space-y-2.5">
                         <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold">
                           <span>⚙</span>
                           <span>CLINICAL AI CORE</span>
@@ -855,7 +1036,7 @@
                   </div>
                 )}
 
-                {/* --- STEP 3: SYNTHESIS & REVIEW (IMAGE 1 EXACT) --- */}
+                {/* --- STEP 3: SYNTHESIS & REVIEW (IMAGE 1) --- */}
                 {workflowStep === 3 && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between">
@@ -869,14 +1050,14 @@
                         <button
                           type="button"
                           onClick={() => setWorkflowStep(1)}
-                          className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                          className="px-4 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-all"
                         >
                           Edit Inputs
                         </button>
                         <button
                           type="button"
                           onClick={handleProceedToEvaluation}
-                          className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f2444] hover:bg-[#09182d] text-white shadow-sm flex items-center gap-1.5"
+                          className="px-5 py-2 text-xs font-semibold rounded-full bg-[#0f2444] hover:bg-[#09182d] text-white shadow-sm flex items-center gap-1.5 transition-all"
                         >
                           <span>✔</span>
                           <span>Proceed to Recommendation</span>
@@ -894,33 +1075,33 @@
                       </p>
                     </div>
 
-                    {/* 3 Cards Grid (Image 1) */}
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* 3 Cards Grid (Image 1 with Curvy 3xl) */}
+                    <div className="grid grid-cols-3 gap-5">
                       {/* CARD 1 */}
-                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
+                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-3">
                             <span className="text-sky-600">CARD 1</span>
                             <span className="text-slate-700">Patient Reported</span>
                           </div>
-                          <div className="mt-3 p-3 bg-slate-50 rounded-lg text-xs text-slate-700 italic leading-relaxed">
+                          <div className="mt-4 p-3.5 bg-slate-50 rounded-2xl text-xs text-slate-700 italic leading-relaxed border border-slate-100">
                             &ldquo;{patientNarrative}&rdquo;
                           </div>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[10px] pt-3 border-t border-slate-100">
                           <span className="text-slate-400">Source: Direct Speech Input</span>
                           <span className="text-sky-600 font-bold">High Confidence</span>
                         </div>
                       </div>
 
                       {/* CARD 2 */}
-                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
+                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-3">
                             <span className="text-rose-600">CARD 2</span>
                             <span className="text-slate-700">Follow-up Established</span>
                           </div>
-                          <div className="mt-3 space-y-2 text-xs">
+                          <div className="mt-4 space-y-2 text-xs">
                             <div className="flex items-center gap-1.5 text-slate-700">
                               <span className="text-rose-600 font-bold">✔</span>
                               <span>Chest pain:</span>
@@ -943,54 +1124,54 @@
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[10px] pt-3 border-t border-slate-100">
                           <span className="text-slate-400">Verified via Interactive Prompts</span>
                           <span className="text-rose-600 font-bold">Critical Indicators</span>
                         </div>
                       </div>
 
                       {/* CARD 3 */}
-                      <div className="bg-white rounded-xl border border-[#e2e8f0] p-5 shadow-sm space-y-4 flex flex-col justify-between">
+                      <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-2">
+                          <div className="flex items-center justify-between text-xs font-bold border-b border-slate-100 pb-3">
                             <span className="text-slate-400">CARD 3</span>
                             <span className="text-slate-700">Still Unknown</span>
                           </div>
-                          <div className="mt-3 space-y-2 text-xs">
+                          <div className="mt-4 space-y-2 text-xs">
                             <div className="flex items-center justify-between text-slate-700">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-slate-400 font-bold">?</span>
                                 <span>Pain severity scale</span>
                               </div>
-                              <span className="text-slate-400 text-[11px]">Pending</span>
+                              <span className="text-slate-400 text-[11px] bg-slate-100 px-2 py-0.5 rounded-full">Pending</span>
                             </div>
                             <div className="flex items-center justify-between text-slate-700">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-slate-400 font-bold">?</span>
                                 <span>Pain radiation points</span>
                               </div>
-                              <span className="text-slate-400 text-[11px]">Pending</span>
+                              <span className="text-slate-400 text-[11px] bg-slate-100 px-2 py-0.5 rounded-full">Pending</span>
                             </div>
                             <div className="flex items-center justify-between text-slate-700">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-slate-400 font-bold">?</span>
                                 <span>Relevant medical history</span>
                               </div>
-                              <span className="text-slate-400 text-[11px]">Pending</span>
+                              <span className="text-slate-400 text-[11px] bg-slate-100 px-2 py-0.5 rounded-full">Pending</span>
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] pt-2 border-t border-slate-100">
+                        <div className="flex items-center justify-between text-[10px] pt-3 border-t border-slate-100">
                           <span className="text-slate-400">Recommended to clarify</span>
                           <span className="text-slate-600 font-medium">Low Impact on Urgency</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Explainability Banner (Image 1) */}
-                    <div className="bg-white p-5 rounded-xl border border-[#e2e8f0] flex items-center justify-between shadow-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
+                    {/* Explainability Banner (Curvy 3xl) */}
+                    <div className="bg-white p-6 rounded-3xl border border-[#e2e8f0] flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-3.5">
+                        <div className="w-10 h-10 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">
                           🛡
                         </div>
                         <div>
@@ -1000,7 +1181,7 @@
                       </div>
                       <button
                         onClick={handleProceedToEvaluation}
-                        className="bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-semibold px-4 py-2 rounded-lg shadow-sm whitespace-nowrap"
+                        className="bg-[#0284c7] hover:bg-sky-600 text-white text-xs font-semibold px-5 py-2.5 rounded-full shadow-sm whitespace-nowrap transition-all"
                       >
                         Generate Full Audit Log
                       </button>
@@ -1008,14 +1189,14 @@
                   </div>
                 )}
 
-                {/* --- STEP 4: EVALUATION RESULT (IMAGE 2 EXACT) --- */}
+                {/* --- STEP 4: EVALUATION RESULT (IMAGE 2) --- */}
                 {workflowStep === 4 && (
                   <div className="space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded">
+                          <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-100 text-rose-800 px-3 py-1 rounded-full border border-rose-200">
                             HIGH-RISK PRESENTATION
                           </span>
                           <span className="text-xs font-mono text-slate-400 font-semibold">ID: TRG-84920-X</span>
@@ -1026,14 +1207,14 @@
                         <button
                           type="button"
                           onClick={() => setCurrentView("rules")}
-                          className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm"
+                          className="px-4 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm transition-all"
                         >
                           View Rule Details
                         </button>
                         <button
                           type="button"
                           onClick={() => setShowEscalatedModal(true)}
-                          className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#b91c1c] hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5"
+                          className="px-5 py-2 text-xs font-semibold rounded-full bg-[#b91c1c] hover:bg-rose-700 text-white shadow-sm flex items-center gap-1.5 transition-all"
                         >
                           <span>Escalate to Human Reviewer</span>
                           <span>→</span>
@@ -1041,11 +1222,11 @@
                       </div>
                     </div>
 
-                    {/* Red Protocol Status Banner (Image 2) */}
-                    <div className="bg-[#fee2e2] border border-rose-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    {/* Red Protocol Status Banner (Image 2 with Curvy 3xl) */}
+                    <div className="bg-[#fee2e2] border border-rose-200 rounded-3xl p-7 shadow-sm space-y-4">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 rounded-xl bg-[#dc2626] text-white flex items-center justify-center font-bold text-xl shadow-md">
+                          <div className="w-11 h-11 rounded-2xl bg-[#dc2626] text-white flex items-center justify-center font-bold text-xl shadow-md">
                             *
                           </div>
                           <div>
@@ -1063,30 +1244,30 @@
                         </div>
                       </div>
 
-                      <div className="bg-white rounded-xl p-4 text-xs text-slate-800 leading-relaxed border border-rose-100">
+                      <div className="bg-white rounded-2xl p-4 text-xs text-slate-800 leading-relaxed border border-rose-100 shadow-sm">
                         <div className="font-bold text-slate-900 text-[11px] mb-1">Evaluation Notice</div>
                         A high-risk presentation was identified by the predefined triage rules. This output is strictly based on rule matching criteria and clinical rule logic—no autonomous medical diagnosis or AI probabilistic percentages are generated.
                       </div>
                     </div>
 
-                    {/* Two Column Grid (Image 2) */}
+                    {/* Two Column Grid */}
                     <div className="grid grid-cols-3 gap-6">
-                      {/* Left Column: Why Rule Trigger Analysis + Evidence Audit (2 cols) */}
+                      {/* Left Column (2 cols) */}
                       <div className="col-span-2 space-y-5">
                         
-                        {/* Why? Rule Trigger Analysis Card */}
-                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        {/* Why? Rule Trigger Analysis Card (Curvy 3xl) */}
+                        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div>
                               <h4 className="text-xs font-bold text-slate-900">Why? Rule Trigger Analysis</h4>
                               <p className="text-[11px] text-slate-400">Deterministic rule match identified in patient intake questionnaire.</p>
                             </div>
-                            <span className="px-2.5 py-0.5 bg-[#0f2444] text-white text-[11px] font-mono font-bold rounded">
+                            <span className="px-3 py-1 bg-[#0f2444] text-white text-[11px] font-mono font-bold rounded-full">
                               Rule CP-01
                             </span>
                           </div>
 
-                          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-3">
+                          <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
                             <div className="flex items-center gap-2 text-rose-600 font-semibold text-xs">
                               <span>!</span>
                               <span>Rule CP-01 Triggered</span>
@@ -1107,9 +1288,9 @@
                           </div>
                         </div>
 
-                        {/* Evidence & Intake Data Audit Accordion */}
-                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
-                          <div className="border-b border-slate-100 pb-2">
+                        {/* Evidence & Intake Data Audit Accordion (Curvy 3xl) */}
+                        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                          <div className="border-b border-slate-100 pb-3">
                             <h4 className="text-xs font-bold text-slate-900 flex items-center justify-between">
                               <span>Evidence & Intake Data Audit</span>
                               <span>⌵</span>
@@ -1118,30 +1299,30 @@
                           </div>
 
                           <div className="space-y-3 text-xs">
-                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-slate-900">Patient Reported Symptoms</span>
-                                <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2 py-0.5 rounded">Patient Reported</span>
+                                <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">Patient Reported</span>
                               </div>
                               <p className="text-slate-600 text-[11px]">
                                 Severe substernal chest tightness starting 45 minutes prior to intake, accompanied by acute shortness of breath upon mild exertion.
                               </p>
                             </div>
 
-                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-slate-900">Automated Follow-Up Questionnaire</span>
-                                <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2 py-0.5 rounded">Follow-up Established</span>
+                                <span className="text-[10px] font-semibold bg-sky-100 text-sky-800 px-2.5 py-0.5 rounded-full">Follow-up Established</span>
                               </div>
                               <p className="text-slate-600 text-[11px]">
                                 Confirmed radiation to left arm (Yes). Confirmed prior cardiac history (None reported by patient).
                               </p>
                             </div>
 
-                            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1">
+                            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-slate-900">Missing / Unknown Vitals</span>
-                                <span className="text-[10px] font-semibold bg-slate-200 text-slate-700 px-2 py-0.5 rounded">Unknown</span>
+                                <span className="text-[10px] font-semibold bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full">Unknown</span>
                               </div>
                               <p className="text-slate-600 text-[11px]">
                                 12-lead ECG reading not available during remote intake. Blood pressure and oxygen saturation recorded via consumer wearable device (unverified clinical grade).
@@ -1155,8 +1336,8 @@
                       {/* Right Column: Routing Protocol, Decision Basis, Patient Profile (Image 2) */}
                       <div className="space-y-4">
                         
-                        {/* Routing Protocol Dark Card */}
-                        <div className="bg-[#0c2340] text-white rounded-2xl p-5 shadow-md space-y-3">
+                        {/* Routing Protocol Dark Card (Curvy 3xl) */}
+                        <div className="bg-[#0c2340] text-white rounded-3xl p-6 shadow-md space-y-3.5">
                           <div className="flex items-center gap-1.5 text-sky-400 text-[10px] font-bold uppercase tracking-wider">
                             <span>✚</span>
                             <span>ROUTING PROTOCOL</span>
@@ -1168,7 +1349,7 @@
                             Patient must be transferred directly to emergency medical evaluation or immediate physician review in an acute setting.
                           </p>
 
-                          <div className="space-y-2 pt-2 border-t border-slate-800 text-[11px]">
+                          <div className="space-y-2.5 pt-2 border-t border-slate-800 text-[11px]">
                             <div className="flex justify-between">
                               <span className="text-slate-400">Target Department</span>
                               <span className="font-bold text-white text-right">Emergency Triage Unit</span>
@@ -1186,7 +1367,7 @@
                           <button
                             type="button"
                             onClick={() => setShowEscalatedModal(true)}
-                            className="w-full py-2 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1 mt-2"
+                            className="w-full py-2.5 bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold rounded-full transition-all flex items-center justify-center gap-1 mt-2 shadow-sm"
                           >
                             <span>Escalate to Human Reviewer</span>
                             <span>→</span>
@@ -1194,7 +1375,7 @@
                         </div>
 
                         {/* Decision Basis Card */}
-                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm space-y-2 text-xs">
+                        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-5 shadow-sm space-y-2.5 text-xs">
                           <div className="flex items-center gap-1.5 font-bold text-slate-900">
                             <span>✔</span>
                             <span>Decision Basis</span>
@@ -1202,7 +1383,7 @@
                           <p className="text-[11px] text-slate-500 leading-relaxed">
                             This result is generated entirely by deterministic rules configured in the TriageAI clinical rules engine.
                           </p>
-                          <div className="p-2.5 bg-slate-50 rounded-lg text-[10px] text-slate-700 space-y-1">
+                          <div className="p-3 bg-slate-50 rounded-2xl text-[10px] text-slate-700 space-y-1 border border-slate-100">
                             <div className="font-bold">Compliance Guarantee:</div>
                             <div>• NO AI confidence percentages</div>
                             <div>• NO probabilistic medical diagnosis</div>
@@ -1211,13 +1392,13 @@
                         </div>
 
                         {/* Patient Profile Card (Image 2) */}
-                        <div className="bg-white rounded-2xl border border-[#e2e8f0] p-4 shadow-sm space-y-2">
+                        <div className="bg-white rounded-3xl border border-[#e2e8f0] p-5 shadow-sm space-y-2.5">
                           <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                             <span>PATIENT PROFILE</span>
                             <span>Age 58 • Male</span>
                           </div>
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-xs">
+                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-700 text-xs">
                               JD
                             </div>
                             <div>
@@ -1231,7 +1412,7 @@
                         <button
                           type="button"
                           onClick={() => setCurrentView("note")}
-                          className="w-full py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-xl"
+                          className="w-full py-2.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold rounded-full transition-all shadow-sm"
                         >
                           View Triage Note Document #TR-8849-DX →
                         </button>
@@ -1246,26 +1427,26 @@
             {/* ===================== RULES CLINICAL GOVERNANCE ===================== */}
             {currentView === "rules" && (
               <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
-                <div className="flex items-center justify-between pb-2 border-b border-[#e2e8f0]">
+                <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
                   <div>
                     <div className="flex items-center gap-2 text-[10px] font-bold text-sky-600 uppercase tracking-wider">
                       <span>CLINICAL GOVERNANCE</span>
                       <span>•</span>
                       <span className="text-slate-500 font-normal">Version 4.2 Active</span>
                     </div>
-                    <h2 className="text-xl font-bold text-slate-900 mt-0.5">Triage Rules</h2>
+                    <h2 className="text-2xl font-bold text-slate-900 mt-0.5 tracking-tight">Triage Rules</h2>
                     <p className="text-xs text-slate-500 mt-0.5">Auditable rules used to support routing decisions. Fully deterministic & clinical-board approved.</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => alert("New rule creation requires Clinical Governance Board authorization.")}
-                      className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm"
+                      className="bg-[#0f2444] hover:bg-[#09182d] text-white text-xs font-semibold px-4 py-2 rounded-full shadow-sm"
                     >
                       + Create Rule
                     </button>
                     <button
                       onClick={() => window.print()}
-                      className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-1.5 rounded-lg shadow-sm"
+                      className="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-semibold px-4 py-2 rounded-full shadow-sm"
                     >
                       Export Audit Log
                     </button>
@@ -1277,7 +1458,7 @@
                     <button
                       key={tab}
                       onClick={() => setSelectedRuleCategory(tab)}
-                      className={`px-3.5 py-1.5 rounded-full font-semibold transition-all ${
+                      className={`px-4 py-1.5 rounded-full font-semibold transition-all ${
                         selectedRuleCategory === tab ? "bg-[#0f2444] text-white shadow-sm" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                       }`}
                     >
@@ -1296,16 +1477,16 @@
                         <div
                           key={rule.id}
                           onClick={() => setInspectedRule(rule)}
-                          className={`bg-white rounded-2xl p-5 border cursor-pointer transition-all shadow-sm flex flex-col justify-between ${
+                          className={`bg-white rounded-3xl p-5 border cursor-pointer transition-all shadow-sm flex flex-col justify-between ${
                             isSelected ? "border-sky-600 ring-2 ring-sky-500/20" : "border-[#e2e8f0] hover:border-slate-300"
                           }`}
                         >
                           <div>
                             <div className="flex items-center justify-between mb-2">
-                              <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded">
+                              <span className="font-mono text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-full">
                                 {rule.id}
                               </span>
-                              <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                              <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
                                 isImm ? "bg-rose-50 text-rose-700" : isUrg ? "bg-sky-50 text-sky-700" : "bg-slate-100 text-slate-600"
                               }`}>
                                 {isImm && "• "} {rule.priority}
@@ -1324,22 +1505,22 @@
                   </div>
 
                   {inspectedRule && (
-                    <div className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-sm space-y-4">
+                    <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
                       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                         <span className="text-xs font-bold text-slate-800">Rule Inspector</span>
-                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">• Active</span>
+                        <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-3 py-0.5 rounded-full border border-emerald-200">• Active</span>
                       </div>
                       <div>
                         <div className="text-[10px] font-mono text-slate-400">{inspectedRule.id} • {inspectedRule.category}</div>
                         <h4 className="text-sm font-bold text-slate-900 mt-0.5">{inspectedRule.title}</h4>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700">Priority: {inspectedRule.priority}</span>
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">Action: Human Review</span>
+                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-rose-50 text-rose-700">Priority: {inspectedRule.priority}</span>
+                          <span className="text-[11px] font-semibold px-3 py-0.5 rounded-full bg-slate-100 text-slate-700">Action: Human Review</span>
                         </div>
                       </div>
                       <div>
                         <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block mb-1">DETERMINISTIC RULE LOGIC</span>
-                        <div className="p-3 bg-slate-50 text-slate-800 font-mono text-[11px] rounded-xl border border-slate-200 leading-relaxed">
+                        <div className="p-3 bg-slate-50 text-slate-800 font-mono text-[11px] rounded-2xl border border-slate-200 leading-relaxed">
                           {inspectedRule.deterministic_logic}
                         </div>
                       </div>
@@ -1355,31 +1536,31 @@
               </main>
             )}
 
-            {/* ===================== TRIAGE NOTE OFFICIAL DOCUMENT ===================== */}
+            {/* ===================== TRIAGE NOTE OFFICIAL DOCUMENT (IMAGE 7) ===================== */}
             {currentView === "note" && (
               <main className="p-8 max-w-4xl mx-auto w-full space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <button onClick={() => setCurrentView("workflow")} className="p-1 rounded text-slate-500 hover:text-slate-800">←</button>
+                    <button onClick={() => setCurrentView("workflow")} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-all">←</button>
                     <div>
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">CLINICAL DOCUMENT</div>
                       <h2 className="text-base font-bold text-slate-900">Triage Note #TR-8849-DX</h2>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => window.print()} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Print Note</button>
-                    <button onClick={() => alert("Exported JSON.")} className="px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Export</button>
-                    <button onClick={() => setShowEscalatedModal(true)} className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#0f2444] text-white shadow-sm">Share with Reviewer</button>
+                    <button onClick={() => window.print()} className="px-4 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Print Note</button>
+                    <button onClick={() => alert("Exported JSON.")} className="px-4 py-2 text-xs font-semibold rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-sm">Export</button>
+                    <button onClick={() => setShowEscalatedModal(true)} className="px-5 py-2 text-xs font-semibold rounded-full bg-[#0f2444] text-white shadow-sm">Share with Reviewer</button>
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-[#e2e8f0] p-8 shadow-sm space-y-6">
+                <div className="bg-white rounded-3xl border border-[#e2e8f0] p-8 shadow-sm space-y-6">
                   <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#0f2444] text-white flex items-center justify-center font-bold text-lg">✚</div>
+                      <div className="w-11 h-11 rounded-2xl bg-[#0f2444] text-white flex items-center justify-center font-bold text-lg shadow-sm">✚</div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase bg-sky-50 text-sky-700 px-2 py-0.5 rounded">TRIAGE NOTE</span>
+                          <span className="text-[10px] font-bold uppercase bg-sky-50 text-sky-700 px-2.5 py-0.5 rounded-full">TRIAGE NOTE</span>
                           <span className="text-[10px] font-mono text-slate-400">ID: PT-99281-A</span>
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 mt-0.5">Clinical Intake & Assessment Record</h3>
@@ -1391,13 +1572,13 @@
                     </div>
                   </div>
 
-                  <div className="bg-[#fee2e2] border border-rose-200 rounded-xl p-4 space-y-1">
+                  <div className="bg-[#fee2e2] border border-rose-200 rounded-2xl p-5 space-y-1.5">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-xs font-bold text-rose-700">
                         <span>*</span>
                         <span>Recommendation: ● IMMEDIATE ACUITY</span>
                       </div>
-                      <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded">Level 1 - Resuscitation</span>
+                      <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-3 py-0.5 rounded-full">Level 1 - Resuscitation</span>
                     </div>
                     <p className="text-xs text-rose-950 font-medium">
                       Routing: <strong>Emergency / Human Clinical Assessment</strong> required immediately. Patient exhibits high-risk cardiac and respiratory indicators.
@@ -1405,17 +1586,17 @@
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">PRIMARY CATEGORY</span>
                       <h4 className="text-xs font-bold text-slate-900">Chief Complaint</h4>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200/80 text-xs text-slate-800">
+                      <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-800">
                         Acute chest pain radiating to left jaw accompanied by acute shortness of breath and diaphoresis.
                       </div>
                     </div>
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
                       <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">VERBATIM INPUT</span>
                       <h4 className="text-xs font-bold text-slate-900">Patient's Original Description</h4>
-                      <div className="p-3 bg-white rounded-lg border border-slate-200/80 text-xs text-slate-800 italic">
+                      <div className="p-3.5 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-800 italic">
                         &ldquo;It feels like an elephant is sitting right on my chest, and I can't catch my breath no matter how hard I try. Started about 20 minutes ago while walking.&rdquo;
                       </div>
                     </div>
@@ -1424,91 +1605,243 @@
               </main>
             )}
 
-            {/* Simple fallbacks for remaining views */}
-            {currentView === "active-assessments" && (
-              <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
-                <h2 className="text-xl font-bold text-slate-900">Active Queue Management</h2>
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                  <p className="text-xs text-slate-500">Real-time triage queue stream active with 14 walk-in sessions.</p>
-                </div>
-              </main>
-            )}
-
-            {currentView === "history" && (
-              <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
-                <h2 className="text-xl font-bold text-slate-900">Triage History Records</h2>
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                  <p className="text-xs text-slate-500">Archived patient intake sessions and deterministic audit notes.</p>
-                </div>
-              </main>
-            )}
-
+            {/* ESCALATIONS VIEW */}
             {currentView === "escalations" && (
-              <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
-                <h2 className="text-xl font-bold text-rose-700">Active Human Escalations</h2>
-                <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6">
-                  <p className="text-xs text-rose-900 font-semibold">5 cases flagged for mandatory attending clinician bedside review.</p>
+              <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
+                <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Active Human Escalations</h2>
+                    <p className="text-xs text-slate-500 mt-1">Cases flagged for mandatory attending clinician bedside review.</p>
+                  </div>
+                  <span className="px-3.5 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded-full border border-rose-200">
+                    5 Active High-Risk Cases
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { id: "ESC-8842", name: "Sunita Patel", age: 58, complaint: "Chest pain radiating to left arm", rule: "CP-03", time: "4 mins ago", team: "Cardiology / Cath Lab" },
+                    { id: "ESC-8843", name: "Kavita Krishnan", age: 62, complaint: "Severe dyspnea SpO2 89%", rule: "BR-02", time: "8 mins ago", team: "Respiratory ICU Lead" },
+                    { id: "ESC-8844", name: "Meera Pillai", age: 71, complaint: "Central chest crushing heaviness + diaphoresis", rule: "CP-04", time: "11 mins ago", team: "Emergency Resuscitation Bay" },
+                    { id: "ESC-8845", name: "Lakshmi Raman", age: 67, complaint: "Sudden tearing back and abdominal pain", rule: "AB-01", time: "16 mins ago", team: "Vascular Surgery Alert" },
+                    { id: "ESC-8846", name: "Rohan Mukherjee", age: 24, complaint: "High-speed motorcycle fall with concussive trauma", rule: "IN-01", time: "22 mins ago", team: "Level 1 Trauma Bay" }
+                  ].map(esc => (
+                    <div key={esc.id} className="bg-white rounded-3xl border border-rose-200/80 p-6 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-rose-700 bg-rose-50 px-3 py-1 rounded-full border border-rose-200">
+                          {esc.id} • Rule {esc.rule}
+                        </span>
+                        <span className="text-xs text-slate-400">{esc.time}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-base">{esc.name} ({esc.age}y)</h4>
+                        <p className="text-xs text-slate-600 mt-0.5 font-medium">{esc.complaint}</p>
+                      </div>
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Assigned: <strong className="text-slate-700">{esc.team}</strong></span>
+                        <button
+                          onClick={() => alert(`Reviewing escalated case ${esc.id}. Attending physician dispatched.`)}
+                          className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-full text-xs transition-all shadow-sm"
+                        >
+                          Sign-off Review
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </main>
             )}
 
+            {/* TRIAGE HISTORY VIEW */}
+            {currentView === "history" && (
+              <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
+                <div className="pb-3 border-b border-[#e2e8f0]">
+                  <h2 className="text-2xl font-bold text-slate-900">Triage History Records</h2>
+                  <p className="text-xs text-slate-500 mt-1">Archived intake records with full audit trail and deterministic decision links.</p>
+                </div>
+
+                <div className="bg-white rounded-3xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-[#f8fafc] text-slate-500 font-semibold border-b border-slate-100">
+                      <tr>
+                        <th className="py-3.5 px-5">Case Record</th>
+                        <th className="py-3.5 px-5">Patient Profile</th>
+                        <th className="py-3.5 px-5">Complaint Track</th>
+                        <th className="py-3.5 px-5">Assigned Acuity</th>
+                        <th className="py-3.5 px-5">Triggered Rule</th>
+                        <th className="py-3.5 px-5">Attending Doctor</th>
+                        <th className="py-3.5 px-5 text-right">Audit</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {[
+                        { id: "#TR-9021-DX", name: "Devendra Joshi", age: 29, cat: "Abdominal Pain", acuity: "Urgent", rule: "AB-03", doc: "Dr. Sarah Chen" },
+                        { id: "#TR-9022-DX", name: "Baby Sneha Reddy", age: 4, cat: "Fever", acuity: "Urgent", rule: "FE-03", doc: "Dr. Sarah Chen" },
+                        { id: "#TR-9023-DX", name: "Deepa Chandran", age: 42, cat: "Chest Pain", acuity: "Urgent", rule: "CP-05", doc: "Dr. Sarah Chen" },
+                        { id: "#TR-9024-DX", name: "Karthik Swaminathan", age: 26, cat: "Injury", acuity: "Routine", rule: "IN-05", doc: "Dr. Sarah Chen" },
+                        { id: "#TR-9025-DX", name: "Suresh Nair", age: 55, cat: "Breathing Difficulty", acuity: "Urgent", rule: "BR-03", doc: "Dr. Sarah Chen" }
+                      ].map(h => (
+                        <tr key={h.id} className="hover:bg-slate-50">
+                          <td className="py-3.5 px-5 font-mono font-bold text-slate-900">{h.id}</td>
+                          <td className="py-3.5 px-5 font-semibold text-slate-800">{h.name} ({h.age}y)</td>
+                          <td className="py-3.5 px-5 text-slate-600">{h.cat}</td>
+                          <td className="py-3.5 px-5">
+                            <span className="px-3 py-1 rounded-full font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                              {h.acuity}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 font-mono font-semibold text-sky-600">{h.rule}</td>
+                          <td className="py-3.5 px-5 text-slate-600">{h.doc}</td>
+                          <td className="py-3.5 px-5 text-right">
+                            <button
+                              onClick={() => {
+                                setPatientNarrative(`Archived case for ${h.name} presenting with acute ${h.cat.toLowerCase()}.`);
+                                setCurrentView("note");
+                              }}
+                              className="text-xs text-sky-600 font-semibold hover:underline"
+                            >
+                              View Note
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </main>
+            )}
+
+            {/* ANALYTICS VIEW */}
             {currentView === "analytics" && (
-              <main className="p-8 max-w-6xl mx-auto w-full space-y-4">
-                <h2 className="text-xl font-bold text-slate-900">Clinical Analytics</h2>
-                <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                  <p className="text-xs text-slate-500">Throughput, SLA adherence, and complaint track breakdowns.</p>
+              <main className="p-8 max-w-6xl mx-auto w-full space-y-6">
+                <div className="pb-3 border-b border-[#e2e8f0]">
+                  <h2 className="text-2xl font-bold text-slate-900">Clinical Triage Analytics</h2>
+                  <p className="text-xs text-slate-500 mt-1">Audit metrics, throughput, and protocol adherence statistics.</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-5">
+                  <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Acuity Distribution</span>
+                    <div className="space-y-3 pt-1 text-xs">
+                      <div>
+                        <div className="flex justify-between font-semibold mb-1">
+                          <span className="text-rose-600">Immediate (Level 1)</span>
+                          <span>22%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2">
+                          <div className="bg-rose-600 h-2 rounded-full" style={{ width: "22%" }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between font-semibold mb-1">
+                          <span className="text-amber-600">Urgent (Level 2/3)</span>
+                          <span>46%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2">
+                          <div className="bg-amber-500 h-2 rounded-full" style={{ width: "46%" }}></div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between font-semibold mb-1">
+                          <span className="text-emerald-600">Routine (Level 4/5)</span>
+                          <span>32%</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-2">
+                          <div className="bg-emerald-600 h-2 rounded-full" style={{ width: "32%" }}></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-4">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Complaint Breakdown</span>
+                    <div className="space-y-2 pt-1 text-xs">
+                      <div className="flex justify-between py-1 border-b border-slate-50">
+                        <span>Chest Pain</span>
+                        <span className="font-mono font-bold text-slate-800">28%</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-50">
+                        <span>Breathing Difficulty</span>
+                        <span className="font-mono font-bold text-slate-800">24%</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-50">
+                        <span>Physical Injury / Trauma</span>
+                        <span className="font-mono font-bold text-slate-800">20%</span>
+                      </div>
+                      <div className="flex justify-between py-1 border-b border-slate-50">
+                        <span>Abdominal Pain</span>
+                        <span className="font-mono font-bold text-slate-800">16%</span>
+                      </div>
+                      <div className="flex justify-between py-1">
+                        <span>Fever / Infection</span>
+                        <span className="font-mono font-bold text-slate-800">12%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-3xl border border-[#e2e8f0] p-6 shadow-sm space-y-3">
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Safety & Audit Governance</span>
+                    <div className="space-y-3 pt-1 text-xs">
+                      <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-800 border border-emerald-100">
+                        <strong>100% Rule Grounding:</strong> Zero hallucinations or autonomous diagnoses detected across 4,821 evaluations.
+                      </div>
+                      <div className="p-3 rounded-2xl bg-sky-50 text-sky-800 border border-sky-100">
+                        <strong>Avg Intake Duration:</strong> 2.4 minutes per patient intake.
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </main>
             )}
 
           </div>
 
-          {/* Quick Triage Modal */}
+          {/* Quick Triage Modal (Curvy 3xl) */}
           {showQuickTriage && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="font-bold text-sm text-slate-900">Quick Walk-in Triage</h3>
-                  <button onClick={() => setShowQuickTriage(false)}>✕</button>
+                  <button onClick={() => setShowQuickTriage(false)} className="text-slate-400 hover:text-slate-600">✕</button>
                 </div>
                 <textarea
                   rows={4}
                   value={patientNarrative}
                   onChange={(e) => setPatientNarrative(e.target.value)}
-                  className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-lg"
+                  className="w-full p-3.5 text-xs bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-sky-500"
                   placeholder="Enter patient complaint..."
                 />
-                <div className="flex justify-end gap-2">
-                  <button onClick={() => setShowQuickTriage(false)} className="px-3 py-1.5 text-xs text-slate-600">Cancel</button>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button onClick={() => setShowQuickTriage(false)} className="px-4 py-2 text-xs font-semibold rounded-full text-slate-600 hover:bg-slate-50">Cancel</button>
                   <button
                     onClick={() => {
                       setShowQuickTriage(false);
                       setWorkflowStep(1);
                       setCurrentView("workflow");
                     }}
-                    className="px-4 py-1.5 bg-[#0f2444] text-white text-xs font-semibold rounded-lg"
+                    className="px-5 py-2 bg-[#0f2444] text-white text-xs font-semibold rounded-full shadow-sm"
                   >
-                    Start Triage
+                    Start Triage →
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Escalation Dispatched Modal */}
+          {/* Escalation Dispatched Modal (Curvy 3xl) */}
           {showEscalatedModal && (
             <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-xl font-bold">
+              <div className="bg-white rounded-3xl max-w-sm w-full p-7 shadow-2xl text-center space-y-3.5 border border-slate-100">
+                <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center text-2xl font-bold">
                   ✔
                 </div>
                 <h3 className="font-bold text-base text-slate-900">Human Review Dispatched</h3>
-                <p className="text-xs text-slate-600">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Case escalated to Emergency Triage Unit. Attending Physician Dr. Sarah Chen notified. SLA &lt; 2 mins active.
                 </p>
                 <button
                   onClick={() => setShowEscalatedModal(false)}
-                  className="w-full py-2 bg-[#0f2444] text-white text-xs font-bold rounded-lg mt-2"
+                  className="w-full py-2.5 bg-[#0f2444] text-white text-xs font-bold rounded-full mt-2 shadow-sm"
                 >
                   Close
                 </button>
