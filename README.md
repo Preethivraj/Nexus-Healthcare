@@ -5,28 +5,6 @@ An auditable, clinical-grade patient intake triage assistant engineered for emer
 
 ---
 
-## 🚀 One-Command Run Instructions
-
-The application serves both the modern clinical frontend and the Python backend concurrently on port 8000 via a single terminal command:
-
-```bash
-# 1. Install dependencies (Python 3.11)
-pip install -r requirements.txt
-
-# 2. (Optional) Set your Gemini API key (system gracefully operates with built-in clinical fallback if omitted)
-# Windows PowerShell:
-$env:GEMINI_API_KEY="your_api_key_here"
-# Linux/macOS:
-export GEMINI_API_KEY="your_api_key_here"
-
-# 3. Launch application (Starts in < 3 seconds)
-python app.py
-```
-
-Open your browser and navigate to: **`http://localhost:8000`**
-
----
-
 ## 📋 What the System Does
 
 1. **Natural Language Intake ("Understand")**:
@@ -64,13 +42,6 @@ Open your browser and navigate to: **`http://localhost:8000`**
 
 ---
 
-## 🎥 Demo Video Link
-- **Demo Video (2-3 mins)**: [Demo Video Link](https://youtu.be/sample-healthcare-triage-demo) *(Update with your recorded link)*
-  - Showing:
-    1. Normal Walk-in Case: Low-grade fever / minor ankle sprain progressing cleanly to Routine Outpatient Clinic.
-    2. High-Risk Emergency Case: Acute chest tightness with breathing difficulty triggering `Rule CP-01`, Immediate Acuity routing, and direct human clinician escalation.
-
----
 
 ## 🏗️ Architecture & Sound Engineering
 
