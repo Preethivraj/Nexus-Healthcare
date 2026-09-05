@@ -196,13 +196,16 @@ class GeminiTriageClient:
         t = text.lower()
         if any(w in t for w in ["chest", "heart", "angina", "tightness", "substernal", "crushing"]):
             return "Chest Pain"
-        if any(w in t for w in ["breath", "short of breath", "dyspnea", "gasping", "wheez", "asthma"]):
+        if any(w in t for w in ["breath", "short of breath", "dyspnea", "gasping", "wheez", "asthma", "suffocat"]):
             return "Breathing Difficulty"
-        if any(w in t for w in ["fever", "chills", "temperature", "hot", "rigor"]):
+        if any(w in t for w in ["fever", "chills", "temperature", "hot", "rigor", "pyrexia", "shiver"]):
             return "Fever"
-        if any(w in t for w in ["fall", "cut", "bleed", "fracture", "accident", "hit", "injury", "twist", "sprain"]):
+        if any(w in t for w in [
+            "fall", "cut", "bleed", "fracture", "accident", "hit", "injury", "twist", "sprain",
+            "ankle", "wrist", "leg", "arm", "trip", "hurt", "swollen", "wound", "bruise", "trauma", "lacerat"
+        ]):
             return "Injury"
-        if any(w in t for w in ["stomach", "abdomen", "belly", "cramp", "appendix", "nausea"]):
+        if any(w in t for w in ["stomach", "abdomen", "belly", "cramp", "appendix", "nausea", "vomit", "gut", "tummy"]):
             return "Abdominal Pain"
         return "Chest Pain"  # Default clinical vigilance
 
